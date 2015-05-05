@@ -3,42 +3,22 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>Beacon</title>
+<link href="index.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script src="http://www.parsecdn.com/js/parse-1.4.2.min.js"></script>
-<script type="text/javascript">
-//initialize
-	Parse.initialize("eEkyWoV3SAmRZcZKw8mU0AbiTQXneGTUXA8x4pRs", "1Qv7YO6sgyx3VjD9DXpKjdghOzGG488Ifv5QtAba");
-//func
-function getData(){
-	//get table
-	var User = Parse.Object.extend("User");
-	var user = new User();
-	var query = new Parse.Query(User);
-	query.get("V5vOGeYMXR", {
-  success: function(user) {
-    // The object was retrieved successfully.
-	//put data to var
-	var name = user.get("username");
-	var UUID = user.get("UUID");
-	var email = user.get("email");
-	//show result
-	var div = document.getElementById("textDiv");
-    //div.textContent = "User Name:"+name+"</br>"+" UUID:"+UUID+" Email:"+email;
-	var textContent = "</br>"+"RESULT:"+"</br></br>"+"User Name:&nbsp;"+name+"</br>"+" UUID:&nbsp;"+UUID+"</br>"+" Email:&nbsp;"+email;
-	$(div).html(textContent);
-  },
-  error: function(object, error) {
-    // The object was not retrieved successfully.
-    // error is a Parse.Error with an error code and description.
-	alert("發生錯誤");
-  }
-});
-		}
-</script>
+<script src="index.js"></script>
 </head>
-
 <body>
 <button type="button" onclick="getData()">Get data!</button>
 <div id="textDiv"></div>
+<p>------------------</p>
+<p>Query Type:</p>
+<select id="qType">
+ <option>User Name</option>
+ <option>Email</option>
+ <option>UUID</option>
+</select>
+<input type="text" id="qText"/>
+<button type="submit" onclick="findData()">Submit</button>
 </body>
 </html>
