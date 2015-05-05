@@ -31,7 +31,7 @@
                                         console.debug("Successfully update user info!");
                                         // 傳送session到後端
                                         var sessionToken = user._sessionToken;
-                                        window.location.href = "/fblogin?session=" + sessionToken;
+                                        window.location.href = "../index/index.html";
                                     },
                                     error: function (user, error) {
                                         console.debug("Oops, something went wrong updating user info.");
