@@ -51,7 +51,7 @@ public class MainActivity extends Activity implements OnResponse, OniBeaconScan 
     private Timer timer;
     private ListView lv;
     private int lv_position = 0;
-    private String[] vData = { "§Ú­n¥hbeacon1", "§Ú­n¥hbeacon2", "§Ú­n¥hbeacon3" };
+    private String[] vData = { "æˆ‘è¦å»beacon1", "æˆ‘è¦å»beacon2", "æˆ‘è¦å»beacon3" };
     private enum Dist
     {
         Immediate,
@@ -60,7 +60,7 @@ public class MainActivity extends Activity implements OnResponse, OniBeaconScan 
         VeryFar,
     }
 
-    //§ì¤è¦V©Ò»İÅÜ¼Æ
+    //æŠ“æ–¹å‘æ‰€éœ€è®Šæ•¸
     SensorManager sm = null;
     Direction direction = new Direction();
     private TextView TV;
@@ -73,27 +73,29 @@ public class MainActivity extends Activity implements OnResponse, OniBeaconScan 
         Init_Beacon();
         Init_ListView();
 //        Init_Speak();
-        //¨ú±osensor service
+        //å–å¾—sensor service
         sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-        //µù¥UListener(SensorEventListener,sensorªº·P´úÃş«¬,¾A¦Xªºsensor±Ä¼ËÅÜ¤Æ²v)
+        //è¨»å†ŠListener(SensorEventListener,sensorçš„æ„Ÿæ¸¬é¡å‹,é©åˆçš„sensoræ¡æ¨£è®ŠåŒ–ç‡)
         sm.registerListener(direction.acc_listener, sm.getDefaultSensor(Sensor.TYPE_ORIENTATION), SensorManager.SENSOR_DELAY_NORMAL);
-        //´ú¸Õ¬O§_§ì¨ì¤è¦ì
-        DirectionTimer();
+        //æ¸¬è©¦æ˜¯å¦æŠ“åˆ°æ–¹ä½
+        //DirectionTimer();
+        Start_Scan();
+
     }
 
-    //¤è¦ì´ú¸Õ¥Îtimer
+    //æ–¹ä½æ¸¬è©¦ç”¨timer
     public void DirectionTimer(){
-        //±qlayout¥ÑID«ü©wtextview
+        //å¾layoutç”±IDæŒ‡å®štextview
         TV = (TextView) findViewById(R.id.test);
-        //ªì©l¤Ætimer
+        //åˆå§‹åŒ–timer
          timerForDirection = new Timer();
-        //³]©wTimerªº¤u§@
+        //è¨­å®šTimerçš„å·¥ä½œ
          timerForDirection.schedule(new TimerTask() {
          public void run() {
              runOnUiThread(new Runnable() {
-                 public void run()
-                 {
-                     TV.setText(Float.toString(direction.xViewA));
+                 public void run() {
+                     //TV.setText(Float.toString(direction.xViewA));
+                     //Toast.makeText(getApplicationContext(),"123",Toast.LENGTH_LONG).show();
                  }
              });
 //             Toast.makeText(this , direction.xViewA  , Toast.LENGTH_LONG).show();
@@ -103,16 +105,16 @@ public class MainActivity extends Activity implements OnResponse, OniBeaconScan 
          } , 0, 500);
     }
 
-//    private void Start_Scan() {
-//        // timer = new Timer();
-//        // timer.schedule(new TimerTask() {
-//        // public void run() {
-//        // miScaner.startScaniBeacon(2000);
-//        // }
-//        // } , 0, 2000);
-//    }
+    private void Start_Scan() {
+         timer = new Timer();
+         timer.schedule(new TimerTask() {
+             public void run() {
+                 miScaner.startScaniBeacon(2000);
+             }
+         }, 0, 2000);
+    }
 
-    //ªì©l¤ÆBeacon
+    //åˆå§‹åŒ–Beacon
     private void Init_Beacon() {
         miScaner = new iBeaconScanManager(this, this);
         USBeaconServerInfo serverInfo = new USBeaconServerInfo();
@@ -138,7 +140,7 @@ public class MainActivity extends Activity implements OnResponse, OniBeaconScan 
         mBServer.checkForUpdates();
     }
 
-    //ªì©l¤ÆListView
+    //åˆå§‹åŒ–ListView
     private void Init_ListView() {
         lv = (ListView) findViewById(R.id.listView);
         lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
@@ -159,7 +161,7 @@ public class MainActivity extends Activity implements OnResponse, OniBeaconScan 
         });
     }
 
-    //ªì©l¤Æ»y­µ
+    //åˆå§‹åŒ–èªéŸ³
     private void Init_Speak() {
         ttobj = new TextToSpeech(getApplicationContext(),
                 new TextToSpeech.OnInitListener() {
@@ -221,7 +223,19 @@ public class MainActivity extends Activity implements OnResponse, OniBeaconScan 
 
         for (final USBeaconData data : BList.getList()) {
             if (data.beaconUuid.equals(iBeaconData.beaconUuid)) {
-
+            switch (lv_position){
+            default:
+                case 0:
+                    Toast.makeText(this , "11111111"  , Toast.LENGTH_LONG).show();
+                    break;
+                case 1:
+                    Toast.makeText(this , "22222222"  , Toast.LENGTH_LONG).show();
+                    break;
+                case 2:
+                Toast.makeText(this , "33333333"  , Toast.LENGTH_LONG).show();
+                break;
+            }
+            }
 //                MainActivity.this.runOnUiThread(new Runnable(){
 //                    @Override
 //                    public void run() {
@@ -230,92 +244,92 @@ public class MainActivity extends Activity implements OnResponse, OniBeaconScan 
 //                    }
 //                });
 
-                switch (lv_position) {
-                    default:
-                    case 0:
-                        switch (iBeaconData.minor){
-                            default:
-                            case 0:
-                                Toast.makeText(this , "±z¤w¸g¨ì¹F¥Øªº¦a¤F"  , Toast.LENGTH_LONG).show();
-                                break;
-                            case 1:
-                                if(80<=direction.xViewA&&direction.xViewA<=100){
-                                    Toast.makeText(this , "½Ğ©¹«e¨«"  , Toast.LENGTH_LONG).show();
-                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
-                                    Toast.makeText(this , "½Ğ©¹¥kÂà"  , Toast.LENGTH_LONG).show();
-                                }else{
-                                    Toast.makeText(this , "½Ğ©¹¥ªÂà"  , Toast.LENGTH_LONG).show();
-                                }
-                                break;
-                            case 2:
-                                if(80<=direction.xViewA&&direction.xViewA<=100){
-                                    Toast.makeText(this , "½Ğ©¹«e¨«"  , Toast.LENGTH_LONG).show();
-                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
-                                    Toast.makeText(this , "½Ğ©¹¥kÂà"  , Toast.LENGTH_LONG).show();
-                                }else{
-                                    Toast.makeText(this , "½Ğ©¹¥ªÂà"  , Toast.LENGTH_LONG).show();
-                                }
-                                break;
-                        }
-
-                        break;
-                    case 1:
-                        switch (iBeaconData.minor){
-                            default:
-                            case 0:
-                                if(80<=direction.xViewA&&direction.xViewA<=100){
-                                    Toast.makeText(this , "½Ğ©¹«e¨«"  , Toast.LENGTH_LONG).show();
-                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
-                                    Toast.makeText(this , "½Ğ©¹¥kÂà"  , Toast.LENGTH_LONG).show();
-                                }else{
-                                    Toast.makeText(this , "½Ğ©¹¥ªÂà"  , Toast.LENGTH_LONG).show();
-                                }
-                                break;
-                            case 1:
-                                Toast.makeText(this , "±z¤w¸g¨ì¹F¥Øªº¦a¤F"  , Toast.LENGTH_LONG).show();
-                                break;
-                            case 2:
-                                if(80<=direction.xViewA&&direction.xViewA<=100){
-                                    Toast.makeText(this , "½Ğ©¹«e¨«"  , Toast.LENGTH_LONG).show();
-                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
-                                    Toast.makeText(this , "½Ğ©¹¥kÂà"  , Toast.LENGTH_LONG).show();
-                                }else{
-                                    Toast.makeText(this , "½Ğ©¹¥ªÂà"  , Toast.LENGTH_LONG).show();
-                                }
-                                break;
-                        }
-
-                        break;
-                    case 2:
-                        switch (iBeaconData.minor){
-                            default:
-                            case 0:
-                                if(80<=direction.xViewA&&direction.xViewA<=100){
-                                    Toast.makeText(this , "½Ğ©¹«e¨«"  , Toast.LENGTH_LONG).show();
-                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
-                                    Toast.makeText(this , "½Ğ©¹¥kÂà"  , Toast.LENGTH_LONG).show();
-                                }else{
-                                    Toast.makeText(this , "½Ğ©¹¥ªÂà"  , Toast.LENGTH_LONG).show();
-                                }
-                                break;
-                            case 1:
-                                if(80<=direction.xViewA&&direction.xViewA<=100){
-                                    Toast.makeText(this , "½Ğ©¹«e¨«"  , Toast.LENGTH_LONG).show();
-                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
-                                    Toast.makeText(this , "½Ğ©¹¥kÂà"  , Toast.LENGTH_LONG).show();
-                                }else{
-                                    Toast.makeText(this , "½Ğ©¹¥ªÂà"  , Toast.LENGTH_LONG).show();
-                                }
-                                break;
-                            case 2:
-                                Toast.makeText(this , "±z¤w¸g¨ì¹F¥Øªº¦a¤F"  , Toast.LENGTH_LONG).show();
-                                break;
-                        }
-
-                        break;
-                }
-            }
-            break;
+//                switch (lv_position) {
+//                    default:
+//                    case 0:
+//                        switch (iBeaconData.minor){
+//                            default:
+//                            case 0:
+//                                Toast.makeText(this , "æ‚¨å·²ç¶“åˆ°é”ç›®çš„åœ°äº†"  , Toast.LENGTH_LONG).show();
+//                                break;
+//                            case 1:
+//                                if(80<=direction.xViewA&&direction.xViewA<=100){
+//                                    Toast.makeText(this , "è«‹å¾€å‰èµ°"  , Toast.LENGTH_LONG).show();
+//                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
+//                                    Toast.makeText(this , "è«‹å¾€å³è½‰"  , Toast.LENGTH_LONG).show();
+//                                }else{
+//                                    Toast.makeText(this , "è«‹å¾€å·¦è½‰"  , Toast.LENGTH_LONG).show();
+//                                }
+//                                break;
+//                            case 2:
+//                                if(80<=direction.xViewA&&direction.xViewA<=100){
+//                                    Toast.makeText(this , "è«‹å¾€å‰èµ°"  , Toast.LENGTH_LONG).show();
+//                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
+//                                    Toast.makeText(this , "è«‹å¾€å³è½‰"  , Toast.LENGTH_LONG).show();
+//                                }else{
+//                                    Toast.makeText(this , "è«‹å¾€å·¦è½‰"  , Toast.LENGTH_LONG).show();
+//                                }
+//                                break;
+//                        }
+//
+//                        break;
+//                    case 1:
+//                        switch (iBeaconData.minor){
+//                            default:
+//                            case 0:
+//                                if(80<=direction.xViewA&&direction.xViewA<=100){
+//                                    Toast.makeText(this , "è«‹å¾€å‰èµ°"  , Toast.LENGTH_LONG).show();
+//                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
+//                                    Toast.makeText(this , "è«‹å¾€å³è½‰"  , Toast.LENGTH_LONG).show();
+//                                }else{
+//                                    Toast.makeText(this , "è«‹å¾€å·¦è½‰"  , Toast.LENGTH_LONG).show();
+//                                }
+//                                break;
+//                            case 1:
+//                                Toast.makeText(this , "æ‚¨å·²ç¶“åˆ°é”ç›®çš„åœ°äº†"  , Toast.LENGTH_LONG).show();
+//                                break;
+//                            case 2:
+//                                if(80<=direction.xViewA&&direction.xViewA<=100){
+//                                    Toast.makeText(this , "è«‹å¾€å‰èµ°"  , Toast.LENGTH_LONG).show();
+//                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
+//                                    Toast.makeText(this , "è«‹å¾€å³è½‰"  , Toast.LENGTH_LONG).show();
+//                                }else{
+//                                    Toast.makeText(this , "è«‹å¾€å·¦è½‰"  , Toast.LENGTH_LONG).show();
+//                                }
+//                                break;
+//                        }
+//
+//                        break;
+//                    case 2:
+//                        switch (iBeaconData.minor){
+//                            default:
+//                            case 0:
+//                                if(80<=direction.xViewA&&direction.xViewA<=100){
+//                                    Toast.makeText(this , "è«‹å¾€å‰èµ°"  , Toast.LENGTH_LONG).show();
+//                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
+//                                    Toast.makeText(this , "è«‹å¾€å³è½‰"  , Toast.LENGTH_LONG).show();
+//                                }else{
+//                                    Toast.makeText(this , "è«‹å¾€å·¦è½‰"  , Toast.LENGTH_LONG).show();
+//                                }
+//                                break;
+//                            case 1:
+//                                if(80<=direction.xViewA&&direction.xViewA<=100){
+//                                    Toast.makeText(this , "è«‹å¾€å‰èµ°"  , Toast.LENGTH_LONG).show();
+//                                }else if(0<=direction.xViewA&&direction.xViewA<=79||270<=direction.xViewA&&direction.xViewA<=360){
+//                                    Toast.makeText(this , "è«‹å¾€å³è½‰"  , Toast.LENGTH_LONG).show();
+//                                }else{
+//                                    Toast.makeText(this , "è«‹å¾€å·¦è½‰"  , Toast.LENGTH_LONG).show();
+//                                }
+//                                break;
+//                            case 2:
+//                                Toast.makeText(this , "æ‚¨å·²ç¶“åˆ°é”ç›®çš„åœ°äº†"  , Toast.LENGTH_LONG).show();
+//                                break;
+//                        }
+//
+//                        break;
+//                }
+//            }
+//            break;
         }
         // timer.cancel();
     }
