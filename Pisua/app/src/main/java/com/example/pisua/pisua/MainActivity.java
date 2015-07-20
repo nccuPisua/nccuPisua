@@ -52,6 +52,8 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
     private int tempMinor;
     private double tempDistance = 5;
     private int tempCounter = 0;
+    private int firstMinor;
+    private double firstDistance;
 
     private ListView lv;
     //紀錄listview哪個選項被選擇
@@ -105,7 +107,7 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
         timer = new Timer();
         timer.schedule(new TimerTask() {
             public void run() {
-                if (lv_position == tempMinor || counter == 6) {
+                if (lv_position + 1 == tempMinor || counter == 6) {
                     ifSpeek = true;
                 } else {
                     counter = counter + 1;
@@ -163,7 +165,7 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
 
             public void onClick(View v) {
                 ifSpeek=true;
-                tempCounter=2;
+                tempCounter=3;
             }
 
         });
@@ -171,15 +173,19 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
 
     @Override
     public void onScaned(iBeaconData iBeaconData) {
-        if(tempCounter ==3){
+        if(tempCounter ==5){
+            if(tempMinor==0){
+                tempMinor = firstMinor;
+                tempDistance = firstDistance;
+            }
             beacon.setText("現在位於Beacon" + tempMinor + " 距離您" + tempDistance + "公尺");
             if(ifSpeek){
                 provideClue();
             }
             //歸零計數器、暫存Minor、暫存距離
             tempCounter = 0;
-            tempDistance = 5;
-            tempMinor = 0;
+            tempMinor=0;
+            tempDistance=5;
             ifSpeek=false;
             counter = 0;
     } else {
@@ -214,11 +220,16 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
 
     //當感應到不同beacon時，比較距離遠近並儲存較近的一個
     public void minorDifferer(iBeaconData b){
-            if(tempCounter==0||b.minor != tempMinor && b.calDistance() < tempDistance) {
+        if(b.minor != tempMinor && b.calDistance() < tempDistance) {
                 tempMinor = b.minor;
                 tempDistance = Math.rint(b.calDistance()*100)/100;
-            }
-
+        }else if(tempCounter==0){
+            firstMinor = b.minor;
+            firstDistance = Math.rint(b.calDistance()*100)/100;
+        }else if(b.calDistance()<firstDistance){
+            firstMinor = b.minor;
+            firstDistance = Math.rint(b.calDistance()*100)/100;
+        }
     }
 
     private void provideClue(){
