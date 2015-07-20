@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="libusbeaconapp">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/app/libs/libusbeaconapp.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
