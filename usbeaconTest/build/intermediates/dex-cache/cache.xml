@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="C:\Users\Pisua\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-annotations\22.2.0\support-annotations-22.2.0.jar"
+        jumboMode="false"
+        revision="23.0.0 rc2"
+        sha1="66b42a1f3eb7676070b7ef7f14b603483aecbee1">
+        <dex dex="D:\RogerTsai\Code\usbeaconTest\app\build\intermediates\pre-dexed\debug\support-annotations-22.2.0-3e93475d7e82885162de4df6962fe5408c676eca.jar" />
+    </item>
+    <item
+        jar="D:\RogerTsai\Code\usbeaconTest\app\libs\libusbeaconapp.jar"
+        jumboMode="false"
+        revision="23.0.0 rc2"
+        sha1="68075710adf15551f1eb1860415b4a514d6d141b">
+        <dex dex="D:\RogerTsai\Code\usbeaconTest\app\build\intermediates\pre-dexed\debug\libusbeaconapp-3c7559cfdb05f1afa4ada55959cf36f0235ce0db.jar" />
+    </item>
+    <item
+        jar="D:\RogerTsai\Code\usbeaconTest\app\build\intermediates\exploded-aar\com.android.support\support-v4\22.2.0\jars\classes.jar"
+        jumboMode="false"
+        revision="23.0.0 rc2"
+        sha1="1ee588ff2c4daf7b97c1cbf922a6c7f027285c2f">
+        <dex dex="D:\RogerTsai\Code\usbeaconTest\app\build\intermediates\pre-dexed\debug\classes-5182f48b315e2bf133ef9fd61c27f56c2b100f74.jar" />
+    </item>
+    <item
+        jar="D:\RogerTsai\Code\usbeaconTest\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\22.2.0\jars\classes.jar"
+        jumboMode="false"
+        revision="23.0.0 rc2"
+        sha1="73753982da6bde518f3a4c6b372749981d14d1a0">
+        <dex dex="D:\RogerTsai\Code\usbeaconTest\app\build\intermediates\pre-dexed\debug\classes-2adc9dc288c6b69d25f1a52d6ef3903e29e84195.jar" />
+    </item>
+    <item
+        jar="D:\RogerTsai\Code\usbeaconTest\app\build\intermediates\exploded-aar\com.android.support\support-v4\22.2.0\jars\libs\internal_impl-22.2.0.jar"
+        jumboMode="false"
+        revision="23.0.0 rc2"
+        sha1="57f2ab85c164ff1676ec64dee787981c046fab79">
+        <dex dex="D:\RogerTsai\Code\usbeaconTest\app\build\intermediates\pre-dexed\debug\internal_impl-22.2.0-1d27e79b1fcf4a7f2ce36f11677e9ad7d1fe38b0.jar" />
+    </item>
+    <item
+        jar="D:\RogerTsai\Code\usbeaconTest\app\libs\thlutil.jar"
+        jumboMode="false"
+        revision="23.0.0 rc2"
+        sha1="b4a03d4d71ce4e087405a22af4c3126071ebed8a">
+        <dex dex="D:\RogerTsai\Code\usbeaconTest\app\build\intermediates\pre-dexed\debug\thlutil-8983a7dc14047d8b26bd8694d2de7dcb5fca3fcb.jar" />
+    </item>
+
+</items>
