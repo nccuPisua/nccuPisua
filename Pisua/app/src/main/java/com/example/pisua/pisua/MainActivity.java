@@ -14,6 +14,7 @@ import java.util.TimerTask;
 
 import android.app.Activity;
 import android.speech.tts.TextToSpeech;
+import android.support.annotation.MainThread;
 import android.util.Log;
 import android.view.View;
 
@@ -31,6 +32,7 @@ import com.THLight.USBeacon.App.Lib.iBeaconScanManager;
 import com.THLight.USBeacon.App.Lib.iBeaconScanManager.OniBeaconScan;
 
 
+import com.parse.FindCallback;
 import com.parse.GetCallback;
 import com.parse.Parse;
 import com.parse.ParseException;
@@ -92,20 +94,6 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
         Parse.enableLocalDatastore(this);
         Parse.initialize(this, "eEkyWoV3SAmRZcZKw8mU0AbiTQXneGTUXA8x4pRs", "o2qgJI1CKvSmZGVzy8QbVEoBMrkXTztodZdljLFM");
 
-        final ParseQuery<ParseObject> queryBData = ParseQuery.getQuery("Beacon_Data");
-        queryBData.whereEqualTo("Minor", lv_position);
-        queryBData.getFirstInBackground(new GetCallback<ParseObject>() {
-            public void done(ParseObject object, ParseException e) {
-                if (object == null) {
-                    Log.d("Location", "The getFirst request failed.");
-                } else {
-                    Log.d("Location", "Retrieved the object.");
-                    targetPoint = object.getParseGeoPoint("Location");
-                    Log.e("targetPoint",targetPoint.toString());
-                }
-            }
-        });
-
         initView();
         Init_ListView();
         Init_Speak();
@@ -166,6 +154,23 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
                 //將被點選的攔位儲存
                 lv_position = position;
                 ifSpeek=true;
+
+                ParseQuery<ParseObject> query = ParseQuery.getQuery("Beacon_Data");
+                query.whereEqualTo("Minor", lv_position+1);
+                query.getFirstInBackground(new GetCallback<ParseObject>() {
+                    public void done(ParseObject object, ParseException e) {
+                        if (object == null) {
+                            Log.e("Target Location", "The getFirst request failed.");
+                        } else {
+                            Log.e("Target Location", "Retrieved the object.");
+                            targetPoint = object.getParseGeoPoint("Location");
+                            Log.e("Target Location", targetPoint.toString());
+
+                        }
+                    }
+                });
+                double angle = GetAngle.calAngle(targetPoint, targetPoint);
+                Log.e("Angle", String.valueOf(angle));
             }
 
         });
@@ -208,6 +213,21 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
                 tempMinor = firstMinor;
                 tempDistance = firstDistance;
             }
+
+            ParseQuery<ParseObject> Query = ParseQuery.getQuery("Beacon_Data");
+            Query.whereEqualTo("Minor", tempMinor);
+            Query.getFirstInBackground(new GetCallback<ParseObject>() {
+                public void done(ParseObject Object, ParseException e) {
+                    if (Object == null) {
+                        Log.e("Source Location", "The getFirst request failed.");
+                    } else {
+                        Log.e("Source Location", "Retrieved the object.");
+                        sourcePoint = Object.getParseGeoPoint("Location");
+                        Log.e("Source Location",sourcePoint.toString());
+                    }
+                }
+            });
+
             beacon.setText("現在位於Beacon" + tempMinor + " 距離您" + tempDistance + "公尺");
             if(ifSpeek){
                 provideClue();
