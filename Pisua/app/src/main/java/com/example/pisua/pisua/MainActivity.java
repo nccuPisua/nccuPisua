@@ -40,8 +40,7 @@ import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 
-import com.example.pisua.pisua.GetAngle;
-
+import static com.example.pisua.pisua.GetAngle.*;
 
 
 public class MainActivity extends Activity implements  OniBeaconScan, SensorEventListener {
@@ -169,7 +168,7 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
                         }
                     }
                 });
-                double angle = GetAngle.calAngle(targetPoint, targetPoint);
+                double angle = calAngle(targetPoint, targetPoint);
                 Log.e("Angle", String.valueOf(angle));
             }
 
