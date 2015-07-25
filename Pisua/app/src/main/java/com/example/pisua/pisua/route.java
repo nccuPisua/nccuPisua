@@ -5,16 +5,16 @@ import java.util.List;
     
 public class route {     
     
-    private static int INF=Integer.MAX_VALUE;     
+    private static double INF=Double.MAX_VALUE;     
          //dist[i][j]=INF<==>顶点i和j之间没有边     
-    private int[][] dist;     
+    private double[][] dist;     
          //顶点i 到 j的最短路径长度，初值是i到j的边的权重       
     private int[][] path;       
     private List<Integer> result=new ArrayList<Integer>();     
          
     public static void main(String[] args) {     
         route graph=new route(18);     
-        int[][] matrix={     
+        double[][] matrix={     
                 {INF,5,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,},     
                 {5,INF,5,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF},     
                 {INF,5,INF,5,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF},     
@@ -34,7 +34,7 @@ public class route {
                 {INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,5,INF,5},
                 {INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,INF,5,INF,5,INF},
         };     
-        int begin=13;     
+        int begin=9;     
         int end=17;     
         graph.findCheapestPath(begin,end,matrix);     
         List<Integer> list=graph.result;     
@@ -43,7 +43,7 @@ public class route {
         System.out.println(graph.dist[begin][end]);     
     }     
     
-    public void findCheapestPath(int begin,int end,int[][] matrix){     
+    public void findCheapestPath(int begin,int end,double[][] matrix){     
         floyd(matrix);     
         result.add(begin);     
         findPath(begin,end);     
@@ -57,7 +57,7 @@ public class route {
         result.add(k);     
         findPath(k,j);     
     }     
-    public void floyd(int[][] matrix){     
+    public void floyd(double[][] matrix){     
         int size=matrix.length;     
         //initialize dist and path     
         for(int i=0;i<size;i++){     
@@ -83,6 +83,6 @@ public class route {
          
     public route(int size){   //构造函数  
         this.path=new int[size][size];     
-        this.dist=new int[size][size];     
+        this.dist=new double[size][size];     
     }     
 }    
