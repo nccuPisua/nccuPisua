@@ -2,7 +2,6 @@ package com.example.pisua.pisua;
 
 import android.util.Log;
 import java.lang.Math;
-
 import com.parse.ParseGeoPoint;
 
 

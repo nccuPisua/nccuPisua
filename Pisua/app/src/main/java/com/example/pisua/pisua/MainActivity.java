@@ -7,6 +7,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -39,6 +40,8 @@ import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+
+import org.json.JSONArray;
 
 import static com.example.pisua.pisua.GetAngle.*;
 
@@ -80,6 +83,12 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
     private ParseGeoPoint sourcePoint;
     private ParseGeoPoint targetPoint;
 
+    private List<ParseObject> tableList;
+    public double[][] matrix;
+    private static double INF = Double.MAX_VALUE;
+    private ParseGeoPoint pointX;
+    private ParseGeoPoint pointY;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,26 +106,22 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
         Init_ListView();
         Init_Speak();
         Init_Button();
+        Init_Matrix();
         setSensor();
     }
+
     @Override
     public void onResume() {
         super.onResume();  // Always call the superclass method first
         //開始掃描
         Start_Scan();
     }
+
     @Override
     public void onPause() {
         super.onPause();  // Always call the superclass method first
         miScaner.stopScaniBeacon();
         timer.cancel();
-    }
-
-
-    //初始化textview
-    private void initView() {
-        direction = (TextView) findViewById(R.id.direction);
-        beacon = (TextView) findViewById(R.id.beacon);
     }
 
     //開始掃描，設定計時器，每半秒掃描一次
@@ -133,6 +138,12 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
                 miScaner.startScaniBeacon(500);
             }
         }, 0, 500);
+    }
+
+    //初始化textview
+    private void initView() {
+        direction = (TextView) findViewById(R.id.direction);
+        beacon = (TextView) findViewById(R.id.beacon);
     }
 
     //初始化ListView
@@ -203,6 +214,54 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
             }
 
         });
+    }
+
+    private void Init_Matrix(){
+        ParseQuery<ParseObject> table = ParseQuery.getQuery("Beacon_Data");
+        table.whereExists("Minor");
+        table.addAscendingOrder("Minor");
+        table.findInBackground(new FindCallback<ParseObject>() {
+            public void done(List<ParseObject> tempList, ParseException e) {
+                if (e == null) {
+                    Log.d("table", "Retrieved ");
+                    tableList = tempList;
+                } else {
+                    Log.d("table", "Error: " + e.getMessage());
+                }
+            }
+        });
+
+        matrix = new double[tableList.size()][tableList.size()];
+        for(int i = 0; i < tableList.size(); i++){
+            for(int j = 0; j<tableList.size();j++){
+                matrix[i][j]=INF;
+            }
+        }
+        for(int i = 0; i<tableList.size(); i++){
+            ParseObject tempObject = tableList.get(i);
+            List<Integer> tempList = tempObject.getList("route");
+            for(int j = 0 ; j < tempList.size(); j++){
+                int y = tempList.get(j).intValue();
+                matrix[i][y] = getLength(i,y);
+            }
+        }
+    }
+
+    private double getLength(int x,int y){
+        ParseQuery<ParseObject> length = ParseQuery.getQuery("Beacon_Data");
+        int[] minors = {x, y};
+        length.whereContainedIn("Minor", Arrays.asList(minors));
+        length.findInBackground(new FindCallback<ParseObject>() {
+            public void done(List<ParseObject> tempList, ParseException e) {
+                if (e == null) {
+                    pointX = tempList.get(0).getParseGeoPoint("Location");
+                    pointY = tempList.get(0).getParseGeoPoint("Location");
+                } else {
+                    Log.d("length", "Error: " + e.getMessage());
+                }
+            }
+        });
+        return pointX.distanceInKilometersTo(pointY);
     }
 
     @Override
