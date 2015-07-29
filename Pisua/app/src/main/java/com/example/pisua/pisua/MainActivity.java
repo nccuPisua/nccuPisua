@@ -7,7 +7,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -15,7 +14,6 @@ import java.util.TimerTask;
 
 import android.app.Activity;
 import android.speech.tts.TextToSpeech;
-import android.support.annotation.MainThread;
 import android.util.Log;
 import android.view.View;
 
@@ -27,21 +25,16 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.THLight.USBeacon.App.Lib.USBeaconConnection;
 import com.THLight.USBeacon.App.Lib.iBeaconData;
 import com.THLight.USBeacon.App.Lib.iBeaconScanManager;
 import com.THLight.USBeacon.App.Lib.iBeaconScanManager.OniBeaconScan;
 
-
-import com.parse.FindCallback;
 import com.parse.GetCallback;
 import com.parse.Parse;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
-
-import org.json.JSONArray;
 
 import static com.example.pisua.pisua.GetAngle.*;
 
@@ -69,11 +62,10 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
     private int firstMinor;
     private double firstDistance;
 
-    private ListView lv;
     //紀錄listview哪個選項被選擇
     private int lv_position = 0;
     //listview所要顯示的文字
-    private String[] vData = { "我要去beacon1", "我要去beacon2", "我要去beacon3" };
+    public static String[] vData = {  };
 
     //layout中的button
     private Button button;
@@ -82,12 +74,7 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
 
     private ParseGeoPoint sourcePoint;
     private ParseGeoPoint targetPoint;
-
-    private List<ParseObject> tableList;
-    public double[][] matrix;
-    private static double INF = Double.MAX_VALUE;
-    private ParseGeoPoint pointX;
-    private ParseGeoPoint pointY;
+    private double angle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +93,8 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
         Init_ListView();
         Init_Speak();
         Init_Button();
-        Init_Matrix();
+        Route.Init_Matrix();
+        Route.Init_vData();
         setSensor();
     }
 
@@ -148,7 +136,7 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
 
     //初始化ListView
     private void Init_ListView() {
-        lv = (ListView) findViewById(R.id.listView);
+        ListView lv = (ListView) findViewById(R.id.listView);
         lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         //設定listview為單選，並把要顯示的文字丟入layout
         ArrayAdapter vArrayData = new ArrayAdapter(this,
@@ -164,23 +152,6 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
                 //將被點選的攔位儲存
                 lv_position = position;
                 ifSpeek=true;
-
-                ParseQuery<ParseObject> query = ParseQuery.getQuery("Beacon_Data");
-                query.whereEqualTo("Minor", lv_position+1);
-                query.getFirstInBackground(new GetCallback<ParseObject>() {
-                    public void done(ParseObject object, ParseException e) {
-                        if (object == null) {
-                            Log.e("Target Location", "The getFirst request failed.");
-                        } else {
-                            Log.e("Target Location", "Retrieved the object.");
-                            targetPoint = object.getParseGeoPoint("Location");
-                            Log.e("Target Location", targetPoint.toString());
-
-                        }
-                    }
-                });
-                double angle = calAngle(targetPoint, targetPoint);
-                Log.e("Angle", String.valueOf(angle));
             }
 
         });
@@ -204,65 +175,19 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
     private void Init_Button(){
         button = (Button)findViewById(R.id.button);
 
-        button.setOnClickListener(new Button.OnClickListener(){
+        button.setOnClickListener(new Button.OnClickListener() {
 
             @Override
 
             public void onClick(View v) {
-                ifSpeek=true;
-                tempCounter=3;
+                ifSpeek = true;
+                tempCounter = 3;
             }
 
         });
     }
 
-    private void Init_Matrix(){
-        ParseQuery<ParseObject> table = ParseQuery.getQuery("Beacon_Data");
-        table.whereExists("Minor");
-        table.addAscendingOrder("Minor");
-        table.findInBackground(new FindCallback<ParseObject>() {
-            public void done(List<ParseObject> tempList, ParseException e) {
-                if (e == null) {
-                    Log.d("table", "Retrieved ");
-                    tableList = tempList;
-                } else {
-                    Log.d("table", "Error: " + e.getMessage());
-                }
-            }
-        });
 
-        matrix = new double[tableList.size()][tableList.size()];
-        for(int i = 0; i < tableList.size(); i++){
-            for(int j = 0; j<tableList.size();j++){
-                matrix[i][j]=INF;
-            }
-        }
-        for(int i = 0; i<tableList.size(); i++){
-            ParseObject tempObject = tableList.get(i);
-            List<Integer> tempList = tempObject.getList("route");
-            for(int j = 0 ; j < tempList.size(); j++){
-                int y = tempList.get(j).intValue();
-                matrix[i][y] = getLength(i,y);
-            }
-        }
-    }
-
-    private double getLength(int x,int y){
-        ParseQuery<ParseObject> length = ParseQuery.getQuery("Beacon_Data");
-        int[] minors = {x, y};
-        length.whereContainedIn("Minor", Arrays.asList(minors));
-        length.findInBackground(new FindCallback<ParseObject>() {
-            public void done(List<ParseObject> tempList, ParseException e) {
-                if (e == null) {
-                    pointX = tempList.get(0).getParseGeoPoint("Location");
-                    pointY = tempList.get(0).getParseGeoPoint("Location");
-                } else {
-                    Log.d("length", "Error: " + e.getMessage());
-                }
-            }
-        });
-        return pointX.distanceInKilometersTo(pointY);
-    }
 
     @Override
     public void onScaned(iBeaconData iBeaconData) {
@@ -271,6 +196,8 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
                 tempMinor = firstMinor;
                 tempDistance = firstDistance;
             }
+
+            beacon.setText("現在位於Beacon" + tempMinor + " 距離您" + tempDistance + "公尺");
 
             ParseQuery<ParseObject> Query = ParseQuery.getQuery("Beacon_Data");
             Query.whereEqualTo("Minor", tempMinor);
@@ -281,12 +208,31 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
                     } else {
                         Log.e("Source Location", "Retrieved the object.");
                         sourcePoint = Object.getParseGeoPoint("Location");
-                        Log.e("Source Location",sourcePoint.toString());
+                        Log.e("Source Location", sourcePoint.toString());
                     }
                 }
             });
 
-            beacon.setText("現在位於Beacon" + tempMinor + " 距離您" + tempDistance + "公尺");
+            int destination  = Route.routing(tempMinor, lv_position + 1).get(1);
+
+            ParseQuery<ParseObject> query = ParseQuery.getQuery("Beacon_Data");
+            query.whereEqualTo("Minor", destination);
+            query.getFirstInBackground(new GetCallback<ParseObject>() {
+                public void done(ParseObject object, ParseException e) {
+                    if (object == null) {
+                        Log.e("Target Location", "The getFirst request failed.");
+                    } else {
+                        Log.e("Target Location", "Retrieved the object.");
+                        targetPoint = object.getParseGeoPoint("Location");
+                        Log.e("Target Location", targetPoint.toString());
+                    }
+                }
+            });
+
+            //書達，我們算出的angle在這，你修改provideClue()函式改變呈現結果就好;
+            angle = calAngle(sourcePoint, targetPoint);
+            Log.e("Angle", String.valueOf(angle));
+
             if(ifSpeek){
                 provideClue();
             }
@@ -304,8 +250,7 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
 
     //設定與註冊感應器
     protected void setSensor() {
-        List sensors = new ArrayList();
-        sensors = sensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
+        List sensors = sensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
         //如果有取到該手機的方位感測器，就註冊他。
         if (sensors.size() > 0) {
             //感應器註冊
@@ -319,7 +264,6 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
         float[] values = event.values;
         directionNum=values[0];
         direction.setText(directionNum + "度");
-
     }
 
     @Override
@@ -340,6 +284,7 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
         }
     }
 
+    //書達你要改的地方在這裡
     private void provideClue(){
             //beacon1 位在小lab中，beacon2位在小lab門口，beacon3位在小巫的lab門口
             switch (lv_position) {
