@@ -1,22 +1,14 @@
 package com.example.pisua.pisua;
 
+import android.app.Activity;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import android.app.Activity;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.View;
-
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
@@ -28,7 +20,6 @@ import android.widget.Toast;
 import com.THLight.USBeacon.App.Lib.iBeaconData;
 import com.THLight.USBeacon.App.Lib.iBeaconScanManager;
 import com.THLight.USBeacon.App.Lib.iBeaconScanManager.OniBeaconScan;
-
 import com.parse.GetCallback;
 import com.parse.Parse;
 import com.parse.ParseException;
@@ -36,10 +27,15 @@ import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 
-import static com.example.pisua.pisua.GetAngle.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import static com.example.pisua.pisua.GetAngle.calAngle;
 
 
-public class MainActivity extends Activity implements  OniBeaconScan, SensorEventListener {
+public class MainActivity extends Activity implements OniBeaconScan, SensorEventListener {
     private iBeaconScanManager miScaner;
 
     //顯示方位的textview
@@ -64,17 +60,19 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
 
     //紀錄listview哪個選項被選擇
     private int lv_position = 0;
-    //listview所要顯示的文字
-    public static String[] vData = {  };
 
     //layout中的button
-    private Button button;
+    public Button button;
     private Boolean ifSpeek = true;
     private int counter = 0;
 
     private ParseGeoPoint sourcePoint;
     private ParseGeoPoint targetPoint;
-    private double angle;
+    public double angle;
+
+    private Route route;
+
+    private ListView lv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,20 +87,21 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
         Parse.enableLocalDatastore(this);
         Parse.initialize(this, "eEkyWoV3SAmRZcZKw8mU0AbiTQXneGTUXA8x4pRs", "o2qgJI1CKvSmZGVzy8QbVEoBMrkXTztodZdljLFM");
 
+        route  = new Route();
+
         initView();
-        Init_ListView();
+        route.Init_Matrix();
         Init_Speak();
         Init_Button();
-        Route.Init_Matrix();
-        Route.Init_vData();
         setSensor();
+        Init_ListView();
     }
 
     @Override
     public void onResume() {
         super.onResume();  // Always call the superclass method first
         //開始掃描
-        Start_Scan();
+        //Start_Scan();
     }
 
     @Override
@@ -132,15 +131,14 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
     private void initView() {
         direction = (TextView) findViewById(R.id.direction);
         beacon = (TextView) findViewById(R.id.beacon);
+        lv = (ListView) findViewById(R.id.listView);
     }
 
     //初始化ListView
-    private void Init_ListView() {
-        ListView lv = (ListView) findViewById(R.id.listView);
+    public void Init_ListView() {
         lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         //設定listview為單選，並把要顯示的文字丟入layout
-        ArrayAdapter vArrayData = new ArrayAdapter(this,
-                android.R.layout.simple_list_item_single_choice, vData);
+        ArrayAdapter vArrayData = new ArrayAdapter(this,android.R.layout.simple_list_item_single_choice, route.vData);
         lv.setAdapter(vArrayData);
         lv.setItemChecked(0, true);
         //當listview被點選時
@@ -213,7 +211,7 @@ public class MainActivity extends Activity implements  OniBeaconScan, SensorEven
                 }
             });
 
-            int destination  = Route.routing(tempMinor, lv_position + 1).get(1);
+            int destination  = route.routing(tempMinor, lv_position + 1).get(1);
 
             ParseQuery<ParseObject> query = ParseQuery.getQuery("Beacon_Data");
             query.whereEqualTo("Minor", destination);

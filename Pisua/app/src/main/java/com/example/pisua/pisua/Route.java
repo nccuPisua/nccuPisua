@@ -2,7 +2,6 @@ package com.example.pisua.pisua;
 
 import android.util.Log;
 
-import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
@@ -20,63 +19,83 @@ public class Route {
     private double[][] dist;
     //顶点i 到 j的最短路径长度，初值是i到j的边的权重
     private int[][] path;
-    private List<Integer> result=new ArrayList<Integer>();
+    private List<Integer> result = new ArrayList<>();
 
     private static List<ParseObject> tableList;
+    public static int tSize;
     public static double[][] matrix;
     private static ParseGeoPoint pointX;
     private static ParseGeoPoint pointY;
+    private static double resultLength;
 
-    public static void Init_Matrix(){
+    //listview所要顯示的文字
+    public static String[] vData;
+
+    public Route(){
+
+    }
+
+
+    public void Init_Matrix(){
         ParseQuery<ParseObject> table = ParseQuery.getQuery("Beacon_Data");
         table.whereExists("Minor");
         table.addAscendingOrder("Minor");
-        table.findInBackground(new FindCallback<ParseObject>() {
-            public void done(List<ParseObject> tempList, ParseException e) {
-                if (e == null) {
-                    Log.d("table", "Retrieved ");
-                    tableList = tempList;
-                } else {
-                    Log.d("table", "Error: " + e.getMessage());
-                }
-            }
-        });
+        List<ParseObject> tempList = null;
+        try {
+            tempList = table.find();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
 
-        matrix = new double[tableList.size()][tableList.size()];
-        for(int i = 0; i < tableList.size(); i++){
-            for(int j = 0; j<tableList.size();j++){
+        Log.d("table", "Retrieved ");
+        tableList = tempList;
+        tSize = tableList.size();
+        Log.e("tSize1", "" + tSize);
+
+        Log.e("tSize2", "" + tSize);
+        matrix = new double[tSize][tSize];
+        for(int i = 0; i < tSize; i++){
+            for(int j = 0; j < tSize;j++){
                 matrix[i][j]=INF;
             }
         }
-        for(int i = 0; i<tableList.size(); i++){
+        for(int i = 0; i<tSize; i++){
             ParseObject tempObject = tableList.get(i);
-            List<Integer> tempList = tempObject.getList("route");
-            for(int j = 0 ; j < tempList.size(); j++){
-                int y = tempList.get(j).intValue();
+            List<Integer> routeList = tempObject.getList("route");
+            int tempSize = routeList.size();
+//                        Log.e("route",routeList.get(0).toString());
+//                        Log.e("tempSize",""+tempSize);
+            for(int j = 0 ; j < tempSize; j++){
+                int y = routeList.get(j)-1;
                 matrix[i][y] = getLength(i,y);
             }
         }
-    }
+        //Log.e("matrix", Double.toString(matrix[1][1]));
 
-    private static double getLength(int x,int y){
+        vData = Init_vData();
+        Log.e("vData",vData[1]);
+
+    }
+    private double getLength(int x,int y){
         ParseQuery<ParseObject> length = ParseQuery.getQuery("Beacon_Data");
         int[] minors = {x, y};
         length.whereContainedIn("Minor", Arrays.asList(minors));
-        length.findInBackground(new FindCallback<ParseObject>() {
-            public void done(List<ParseObject> tempList, ParseException e) {
-                if (e == null) {
-                    pointX = tempList.get(0).getParseGeoPoint("Location");
-                    pointY = tempList.get(0).getParseGeoPoint("Location");
-                } else {
-                    Log.d("length", "Error: " + e.getMessage());
-                }
-            }
-        });
-        return pointX.distanceInKilometersTo(pointY);
+        List<ParseObject> locateList = null;
+        try {
+            locateList = length.find();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        pointX = locateList.get(0).getParseGeoPoint("Location");
+        pointY = locateList.get(1).getParseGeoPoint("Location");
+        resultLength = pointX.distanceInKilometersTo(pointY);
+
+        return resultLength;
     }
 
     public static List<Integer> routing(int begin, int end) {
-        Route graph=new Route(tableList.size());
+        Route graph=new Route(tSize);
         graph.findCheapestPath(begin, end, matrix);
         List<Integer> list=graph.result;
         System.out.println(begin+" to "+end+",the cheapest path is:");
@@ -85,21 +104,21 @@ public class Route {
         return list;
     }
 
-    public void findCheapestPath(int begin,int end,double[][] matrix){
+    private void findCheapestPath(int begin,int end,double[][] matrix){
         floyd(matrix);
         result.add(begin);
         findPath(begin, end);
         result.add(end);
     }
 
-    public void findPath(int i,int j){
+    private void findPath(int i,int j){
         int k=path[i][j];
         if(k==-1)return;
         findPath(i, k);   //递归
         result.add(k);
         findPath(k, j);
     }
-    public void floyd(double[][] matrix){
+    private void floyd(double[][] matrix){
         double size=matrix.length;
         //initialize dist and path     
         for(int i=0;i<size;i++){
@@ -128,11 +147,13 @@ public class Route {
         this.dist=new double[size][size];
     }
 
-    public static void Init_vData(){
-        ArrayList<String> tempData = new ArrayList<String>();
-        for(int i = 0; i<tableList.size();i++){
-            tempData.add("我要去Beacon"+i);
+    public static String[] Init_vData(){
+        ArrayList<String> tempData;
+        tempData = new ArrayList<>();
+        for(int i = 1; i<=tSize;i++){
+            String s = "我要去Beacon"+i;
+            tempData.add(s);
         }
-        MainActivity.vData = tempData.toArray(new String[tempData.size()]);
+        return tempData.toArray(new String[tSize]);
     }
-}    
+}
