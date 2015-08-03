@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Pisua.iml" filepath="$PROJECT_DIR$/Pisua.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/pisua.iml" filepath="$PROJECT_DIR$/.idea/pisua.iml" />
     </modules>
   </component>
 </project>
