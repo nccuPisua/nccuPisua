@@ -142,7 +142,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
             @Override
             public void done(List<Beacon_Data> results, ParseException e) {
                 beaconDataList.addAll(results);
-                //scanBeacon(true);
+                scanBeacon(true);
 
                 int resultsSize = results.size();
                 pathMatrix = new double[resultsSize][resultsSize];
@@ -164,11 +164,11 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                         pathMatrix[i][y] = getLength(i, y);
                     }
                 }
-                for(int i=0;i<18;i++){
-                    Log.e("Matrix",String.valueOf(pathMatrix[0][i]));
-                    Log.e("Beacon",beaconDataList.get(i).getParseGeoPoint("Location").toString());
-
-                }
+//                for(int i=0;i<18;i++){
+//                    Log.e("Matrix",String.valueOf(pathMatrix[0][i]));
+//                    Log.e("Beacon",beaconDataList.get(i).getParseGeoPoint("Location").toString());
+//
+//                }
 
 
             }
@@ -213,7 +213,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
             currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
             getNextDestination();
         } else {
-            if (!iBeaconData.beaconUuid.equals(currentBeacon.beaconUuid) && iBeaconData.calDistance() < currentBeacon.calDistance()) {
+            if (!iBeaconData.beaconUuid.equals(currentBeacon.beaconUuid) && iBeaconData.rssi > currentBeacon.rssi) {
                 currentBeacon = iBeaconData;
 
                 currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
@@ -223,6 +223,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     }
 
     private void getNextDestination() {
+        Log.e("comeIn","OK");
         ParseGeoPoint sourcePoint = null, targetPoint = null;
         for (Beacon_Data beaconData : beaconDataList) {
             if (beaconData.getMinor().intValue() == currentBeacon.minor) {
@@ -230,8 +231,9 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                 break;
             }
         }
-
+        Log.e("firstLoop","OK");
         int destinationMinor = pathRouting(currentBeacon.minor-1, destinationListView.getCheckedItemPosition()).get(1)+1;
+        Log.e("dMinor",String.valueOf(destinationMinor));
 
         for (Beacon_Data beaconData : beaconDataList) {
             if (beaconData.getMinor().intValue() == destinationMinor) {
@@ -239,11 +241,13 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                 break;
             }
         }
+        Log.e("tPoint",targetPoint.toString());
 
         //書達，我們算出的angle在這，你修改provideClue()函式改變呈現結果就好;
         double angle = calAngle(sourcePoint, targetPoint);
+        Log.e("angle",String.valueOf(angle));
 
-        provideClue();
+        //provideClue();
     }
 
     private List<Integer> pathRouting(int begin, int end) {
