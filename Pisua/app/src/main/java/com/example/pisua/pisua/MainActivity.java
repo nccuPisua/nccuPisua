@@ -8,6 +8,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -60,6 +61,8 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     private iBeaconData currentBeacon;
 
     private double[][] pathMatrix;
+
+    private double INF = Double.MAX_VALUE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,7 +142,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
             @Override
             public void done(List<Beacon_Data> results, ParseException e) {
                 beaconDataList.addAll(results);
-                scanBeacon(true);
+                //scanBeacon(true);
 
                 int resultsSize = results.size();
                 pathMatrix = new double[resultsSize][resultsSize];
@@ -148,7 +151,11 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                     destinationList.add("我要去Beacon" + i);
                 }
                 destinationAdapter.notifyDataSetChanged();
-
+                for (int i = 0; i < resultsSize; i++) {
+                    for (int j = 0; j < resultsSize; j++) {
+                        pathMatrix[i][j] = INF;
+                    }
+                }
                 for (int i = 0; i < resultsSize; i++) {
                     Beacon_Data beaconData = results.get(i);
                     List<Integer> routeList = beaconData.getRoute();
@@ -157,6 +164,13 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                         pathMatrix[i][y] = getLength(i, y);
                     }
                 }
+                for(int i=0;i<18;i++){
+                    Log.e("Matrix",String.valueOf(pathMatrix[0][i]));
+                    Log.e("Beacon",beaconDataList.get(i).getParseGeoPoint("Location").toString());
+
+                }
+
+
             }
         });
     }
@@ -164,10 +178,10 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     private double getLength(int x, int y) {
         ParseGeoPoint pointX = null, pointY = null;
         for (Beacon_Data beaconData : beaconDataList) {
-            if (beaconData.getMinor().intValue() == x) {
+            if (beaconData.getMinor().intValue()-1 == x) {
                 pointX = beaconData.getParseGeoPoint("Location");
             }
-            if (beaconData.getMinor().intValue() == y) {
+            if (beaconData.getMinor().intValue()-1 == y) {
                 pointY = beaconData.getParseGeoPoint("Location");
             }
         }
@@ -217,7 +231,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
             }
         }
 
-        int destinationMinor = pathRouting(currentBeacon.minor, destinationListView.getCheckedItemPosition()).get(1);
+        int destinationMinor = pathRouting(currentBeacon.minor-1, destinationListView.getCheckedItemPosition()).get(1)+1;
 
         for (Beacon_Data beaconData : beaconDataList) {
             if (beaconData.getMinor().intValue() == destinationMinor) {
