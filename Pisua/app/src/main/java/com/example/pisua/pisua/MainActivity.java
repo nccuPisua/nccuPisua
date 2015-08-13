@@ -27,13 +27,14 @@ import com.parse.ParseQuery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
 
 
 public class MainActivity extends Activity implements SensorEventListener, iBeaconScanManager.OniBeaconScan {
 
     private Handler mHandler;
 
-    private final int SCAN_PERIOD = 1000;
+    private final int SCAN_PERIOD = 5000;
 
     //顯示方位
     private TextView directionTextView;
@@ -63,6 +64,10 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     private double[][] pathMatrix;
 
     private double INF = Double.MAX_VALUE;
+
+    private boolean firstScan = true;
+
+    private double angle = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +119,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                         }
                     }
                 });
+        currentBeacon = new iBeaconData();
     }
 
     private void scanBeacon(final boolean enable) {
@@ -128,7 +134,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                 }
             }, SCAN_PERIOD);
 
-            beaconScanManager.startScaniBeacon(1000);
+            beaconScanManager.startScaniBeacon(5000);
         } else {
             beaconScanManager.stopScaniBeacon();
         }
@@ -207,47 +213,52 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
 
     @Override
     public void onScaned(iBeaconData iBeaconData) {
-        if (currentBeacon == null) {
-            currentBeacon = iBeaconData;
-
-            currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
-            getNextDestination();
-        } else {
-            if (!iBeaconData.beaconUuid.equals(currentBeacon.beaconUuid) && iBeaconData.rssi > currentBeacon.rssi) {
+        Log.e("onScaned","OK");
+        if(iBeaconData.minor-1 == destinationListView.getCheckedItemPosition()){
+            currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " 距離您" + iBeaconData.calDistance() + "公尺");
+            provideClue(INF);
+        }else {
+            if (firstScan == true) {
                 currentBeacon = iBeaconData;
-
+                firstScan = false;
                 currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
                 getNextDestination();
+            } else if (iBeaconData.minor!=currentBeacon.minor && iBeaconData.rssi > currentBeacon.rssi) {
+                currentBeacon = iBeaconData;
+                currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
+                getNextDestination();
+            } else {
+                provideClue(angle);
             }
         }
     }
 
     private void getNextDestination() {
-        Log.e("comeIn","OK");
-        ParseGeoPoint sourcePoint = null, targetPoint = null;
-        for (Beacon_Data beaconData : beaconDataList) {
-            if (beaconData.getMinor().intValue() == currentBeacon.minor) {
-                sourcePoint = beaconData.getParseGeoPoint("Location");
-                break;
+        Log.e("comeIn", "OK");
+            ParseGeoPoint sourcePoint = null, targetPoint = null;
+            for (Beacon_Data beaconData : beaconDataList) {
+                if (beaconData.getMinor().intValue() == currentBeacon.minor) {
+                    sourcePoint = beaconData.getParseGeoPoint("Location");
+                    break;
+                }
             }
-        }
-        Log.e("firstLoop","OK");
-        int destinationMinor = pathRouting(currentBeacon.minor-1, destinationListView.getCheckedItemPosition()).get(1)+1;
-        Log.e("dMinor",String.valueOf(destinationMinor));
-
-        for (Beacon_Data beaconData : beaconDataList) {
-            if (beaconData.getMinor().intValue() == destinationMinor) {
-                targetPoint = beaconData.getParseGeoPoint("Location");
-                break;
+            Log.e("firstLoop", "OK");
+            int destinationMinor = pathRouting(currentBeacon.minor - 1, destinationListView.getCheckedItemPosition()).get(1) + 1;
+            Log.e("dMinor", String.valueOf(destinationMinor));
+            for (Beacon_Data beaconData : beaconDataList) {
+                if (beaconData.getMinor().intValue() == destinationMinor) {
+                    targetPoint = beaconData.getParseGeoPoint("Location");
+                    break;
+                }
             }
-        }
-        Log.e("tPoint",targetPoint.toString());
+            Log.e("tPoint", targetPoint.toString());
 
-        //書達，我們算出的angle在這，你修改provideClue()函式改變呈現結果就好;
-        double angle = calAngle(sourcePoint, targetPoint);
-        Log.e("angle",String.valueOf(angle));
+            //書達，我們算出的angle在這，你修改provideClue()函式改變呈現結果就好;
+        angle = calAngle(sourcePoint, targetPoint);
+            Log.e("angle", String.valueOf(angle));
 
-        //provideClue();
+            provideClue(angle);
+
     }
 
     private List<Integer> pathRouting(int begin, int end) {
@@ -296,130 +307,139 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     }
 
     //書達你要改的地方在這裡
-    private void provideClue() {
-        //beacon1 位在小lab中，beacon2位在小lab門口，beacon3位在小巫的lab門口
-        switch (destinationListView.getCheckedItemPosition()) {
-            default:
-            case 0:
-                switch (currentBeacon.minor) {
-                    default:
-                    case 1:
-                        if (currentBeacon.calDistance() < 1.5) {
-                            Toast.makeText(this, "您已經到達目的地了", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
-                            break;
-                        } else {
-                            Toast.makeText(this, "您離目的地尚有" + currentBeacon.calDistance() + "公尺", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("There is" + currentBeacon.calDistance() + "left", TextToSpeech.QUEUE_FLUSH, null);
-                            break;
-                        }
-                    case 2:
-                        if (directionAngle >= 175 && directionAngle <= 195) {
-                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle >= 5 && directionAngle <= 174) {
-                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle < 5 || directionAngle > 195) {
-                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
-                        }
-                        break;
-                    case 3:
-                        if (directionAngle >= 85 && directionAngle <= 105) {
-                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle <= 84 || directionAngle >= 275) {
-                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle > 105 && directionAngle < 275) {
-                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
-                        }
-                        break;
-                }
-
-                break;
-            case 1:
-                switch (currentBeacon.minor) {
-                    default:
-                    case 1:
-                        if (directionAngle >= 355 || directionAngle <= 15) {
-                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle >= 185 && directionAngle <= 354) {
-                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle > 15 && directionAngle < 185) {
-                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
-                        }
-                        break;
-                    case 2:
-                        if (currentBeacon.calDistance() < 1.5) {
-                            Toast.makeText(this, "您已經到達目的地了", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
-                            break;
-                        } else {
-                            Toast.makeText(this, "您離目的地尚有" + currentBeacon.calDistance() + "公尺", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("There is" + currentBeacon.calDistance() + "left", TextToSpeech.QUEUE_FLUSH, null);
-                            break;
-                        }
-                    case 3:
-                        if (directionAngle >= 85 && directionAngle <= 105) {
-                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle <= 84 || directionAngle >= 275) {
-                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle > 105 && directionAngle < 275) {
-                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
-                        }
-                        break;
-                }
-
-                break;
-            case 2:
-                switch (currentBeacon.minor) {
-                    default:
-                    case 1:
-                        if (directionAngle >= 355 || directionAngle <= 15) {
-                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle >= 185 && directionAngle <= 354) {
-                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle > 15 && directionAngle < 185) {
-                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
-                        }
-                        break;
-                    case 2:
-                        if (directionAngle >= 265 && directionAngle <= 285) {
-                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle >= 95 && directionAngle <= 264) {
-                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
-                        } else if (directionAngle > 285 || directionAngle < 95) {
-                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
-                        }
-                        break;
-                    case 3:
-                        if (currentBeacon.calDistance() < 1.5) {
-                            Toast.makeText(this, "您已經到達目的地了", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
-                            break;
-                        } else {
-                            Toast.makeText(this, "您離目的地尚有" + currentBeacon.calDistance() + "公尺", Toast.LENGTH_LONG).show();
-                            textToSpeechObject.speak("There is" + currentBeacon.calDistance() + "left", TextToSpeech.QUEUE_FLUSH, null);
-                            break;
-                        }
-                }
-
-                break;
-        }
+    private void provideClue(double a) {
+        Log.e("Provide","OK");
+    if(a==INF){
+        textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
+    }else if(a<=180) {
+        int ang = (int)a;
+        textToSpeechObject.speak("Please turn right "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
+    }else {
+        int ang = (int)(360-a);
+        textToSpeechObject.speak("Please turn left "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
+    }
+//        switch (destinationListView.getCheckedItemPosition()) {
+//            default:
+//            case 0:
+//                switch (currentBeacon.minor) {
+//                    default:
+//                    case 1:
+//                        if (currentBeacon.calDistance() < 1.5) {
+//                            Toast.makeText(this, "您已經到達目的地了", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
+//                            break;
+//                        } else {
+//                            Toast.makeText(this, "您離目的地尚有" + currentBeacon.calDistance() + "公尺", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("There is" + currentBeacon.calDistance() + "left", TextToSpeech.QUEUE_FLUSH, null);
+//                            break;
+//                        }
+//                    case 2:
+//                        if (directionAngle >= 175 && directionAngle <= 195) {
+//                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle >= 5 && directionAngle <= 174) {
+//                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle < 5 || directionAngle > 195) {
+//                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
+//                        }
+//                        break;
+//                    case 3:
+//                        if (directionAngle >= 85 && directionAngle <= 105) {
+//                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle <= 84 || directionAngle >= 275) {
+//                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle > 105 && directionAngle < 275) {
+//                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
+//                        }
+//                        break;
+//                }
+//
+//                break;
+//            case 1:
+//                switch (currentBeacon.minor) {
+//                    default:
+//                    case 1:
+//                        if (directionAngle >= 355 || directionAngle <= 15) {
+//                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle >= 185 && directionAngle <= 354) {
+//                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle > 15 && directionAngle < 185) {
+//                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
+//                        }
+//                        break;
+//                    case 2:
+//                        if (currentBeacon.calDistance() < 1.5) {
+//                            Toast.makeText(this, "您已經到達目的地了", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
+//                            break;
+//                        } else {
+//                            Toast.makeText(this, "您離目的地尚有" + currentBeacon.calDistance() + "公尺", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("There is" + currentBeacon.calDistance() + "left", TextToSpeech.QUEUE_FLUSH, null);
+//                            break;
+//                        }
+//                    case 3:
+//                        if (directionAngle >= 85 && directionAngle <= 105) {
+//                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle <= 84 || directionAngle >= 275) {
+//                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle > 105 && directionAngle < 275) {
+//                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
+//                        }
+//                        break;
+//                }
+//
+//                break;
+//            case 2:
+//                switch (currentBeacon.minor) {
+//                    default:
+//                    case 1:
+//                        if (directionAngle >= 355 || directionAngle <= 15) {
+//                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle >= 185 && directionAngle <= 354) {
+//                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle > 15 && directionAngle < 185) {
+//                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
+//                        }
+//                        break;
+//                    case 2:
+//                        if (directionAngle >= 265 && directionAngle <= 285) {
+//                            Toast.makeText(this, "請往前走", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle >= 95 && directionAngle <= 264) {
+//                            Toast.makeText(this, "請往右轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn right", TextToSpeech.QUEUE_FLUSH, null);
+//                        } else if (directionAngle > 285 || directionAngle < 95) {
+//                            Toast.makeText(this, "請往左轉", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("Please turn left", TextToSpeech.QUEUE_FLUSH, null);
+//                        }
+//                        break;
+//                    case 3:
+//                        if (currentBeacon.calDistance() < 1.5) {
+//                            Toast.makeText(this, "您已經到達目的地了", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
+//                            break;
+//                        } else {
+//                            Toast.makeText(this, "您離目的地尚有" + currentBeacon.calDistance() + "公尺", Toast.LENGTH_LONG).show();
+//                            textToSpeechObject.speak("There is" + currentBeacon.calDistance() + "left", TextToSpeech.QUEUE_FLUSH, null);
+//                            break;
+//                        }
+//                }
+//
+//                break;
+//        }
     }
 }
