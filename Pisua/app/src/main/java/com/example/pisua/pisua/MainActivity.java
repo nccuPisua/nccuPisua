@@ -65,8 +65,6 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
 
     private double INF = Double.MAX_VALUE;
 
-    private boolean firstScan = true;
-
     private double angle = -1;
 
     @Override
@@ -213,23 +211,23 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
 
     @Override
     public void onScaned(iBeaconData iBeaconData) {
-        Log.e("onScaned","OK");
         if(iBeaconData.minor-1 == destinationListView.getCheckedItemPosition()){
-            currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " 距離您" + iBeaconData.calDistance() + "公尺");
+            Log.e("onScaned", "if");
+            currentBeacon = iBeaconData;
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
+                }
+            });
             provideClue(INF);
         }else {
-            if (firstScan == true) {
+            Log.e("onScaned","else");
                 currentBeacon = iBeaconData;
-                firstScan = false;
-                currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");                }
+            });
                 getNextDestination();
-            } else if (iBeaconData.minor!=currentBeacon.minor && iBeaconData.rssi > currentBeacon.rssi) {
-                currentBeacon = iBeaconData;
-                currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
-                getNextDestination();
-            } else {
-                provideClue(angle);
-            }
         }
     }
 
@@ -254,14 +252,15 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
             Log.e("tPoint", targetPoint.toString());
 
             //書達，我們算出的angle在這，你修改provideClue()函式改變呈現結果就好;
-        angle = calAngle(sourcePoint, targetPoint);
+        angle = 25-calAngle(sourcePoint, targetPoint);
             Log.e("angle", String.valueOf(angle));
-
-            provideClue(angle);
+            double result = angle-directionAngle;
+            provideClue(result);
 
     }
 
     private List<Integer> pathRouting(int begin, int end) {
+        Log.e("path","come in");
         List<Integer> result = new ArrayList<>();
         //dist[i][j]=INF<==>頂點I和J之間沒有邊
         double[][] dist = new double[beaconDataList.size()][beaconDataList.size()];
@@ -309,14 +308,17 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     //書達你要改的地方在這裡
     private void provideClue(double a) {
         Log.e("Provide","OK");
+        if(a<0){
+            a+=360;
+        }
     if(a==INF){
         textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
-    }else if(a<=180) {
+    }else if(a>0 && a<=180) {
         int ang = (int)a;
-        textToSpeechObject.speak("Please turn right "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
-    }else {
-        int ang = (int)(360-a);
         textToSpeechObject.speak("Please turn left "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
+    }else if(a>180) {
+        int ang = (int) (360 - a);
+        textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
     }
 //        switch (destinationListView.getCheckedItemPosition()) {
 //            default:
