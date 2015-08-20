@@ -10,6 +10,9 @@ import com.parse.ParseObject;
  * Created by Willy on 2015/8/3.
  */
 public class MainApplication extends Application {
+
+    public static final String PISUA_TAG = "PISUA";
+
     @Override
     public void onCreate() {
         super.onCreate();

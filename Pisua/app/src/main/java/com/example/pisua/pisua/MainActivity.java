@@ -14,7 +14,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.THLight.USBeacon.App.Lib.iBeaconData;
 import com.THLight.USBeacon.App.Lib.iBeaconScanManager;
@@ -27,14 +26,16 @@ import com.parse.ParseQuery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Timer;
 
 
 public class MainActivity extends Activity implements SensorEventListener, iBeaconScanManager.OniBeaconScan {
 
     private Handler mHandler;
 
+    private boolean indoorMode = true;
+
     private final int SCAN_PERIOD = 5000;
+    private final int INDOOR_CHECK_PERIOD = 20 * 1000;
 
     //顯示方位
     private TextView directionTextView;
@@ -67,6 +68,9 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
 
     private double angle = -1;
 
+    private int scanedCount = 0;
+    private int lastScanedCount = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +78,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
 
         init();
         initPathMatrix();
+
     }
 
     private void init() {
@@ -138,6 +143,26 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
         }
     }
 
+    private void indoorCheck() {
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (scanedCount > lastScanedCount) {
+                    lastScanedCount = scanedCount;
+                    if (!indoorMode) {
+                        indoorMode = true;
+                    }
+                } else {
+                    if (indoorMode) {
+                        indoorMode = false;
+                    }
+                }
+
+                indoorCheck();
+            }
+        }, INDOOR_CHECK_PERIOD);
+    }
+
     private void initPathMatrix() {
         ParseQuery<Beacon_Data> beaconDataParseQuery = ParseQuery.getQuery(Beacon_Data.class);
         beaconDataParseQuery.whereExists("Minor");
@@ -147,6 +172,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
             public void done(List<Beacon_Data> results, ParseException e) {
                 beaconDataList.addAll(results);
                 scanBeacon(true);
+                indoorCheck();
 
                 int resultsSize = results.size();
                 pathMatrix = new double[resultsSize][resultsSize];
@@ -168,13 +194,6 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                         pathMatrix[i][y] = getLength(i, y);
                     }
                 }
-//                for(int i=0;i<18;i++){
-//                    Log.e("Matrix",String.valueOf(pathMatrix[0][i]));
-//                    Log.e("Beacon",beaconDataList.get(i).getParseGeoPoint("Location").toString());
-//
-//                }
-
-
             }
         });
     }
@@ -182,10 +201,10 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     private double getLength(int x, int y) {
         ParseGeoPoint pointX = null, pointY = null;
         for (Beacon_Data beaconData : beaconDataList) {
-            if (beaconData.getMinor().intValue()-1 == x) {
+            if (beaconData.getMinor().intValue() - 1 == x) {
                 pointX = beaconData.getParseGeoPoint("Location");
             }
-            if (beaconData.getMinor().intValue()-1 == y) {
+            if (beaconData.getMinor().intValue() - 1 == y) {
                 pointY = beaconData.getParseGeoPoint("Location");
             }
         }
@@ -211,8 +230,10 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
 
     @Override
     public void onScaned(iBeaconData iBeaconData) {
-        if(iBeaconData.minor-1 == destinationListView.getCheckedItemPosition()){
-            Log.e("onScaned", "if");
+        scanedCount++;
+
+        if (iBeaconData.minor - 1 == destinationListView.getCheckedItemPosition()) {
+            Log.e(MainApplication.PISUA_TAG, "onScaned if");
             currentBeacon = iBeaconData;
             runOnUiThread(new Runnable() {
                 public void run() {
@@ -220,47 +241,48 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                 }
             });
             provideClue(INF);
-        }else {
-            Log.e("onScaned","else");
-                currentBeacon = iBeaconData;
+        } else {
+            Log.e(MainApplication.PISUA_TAG, "onScaned else");
+            currentBeacon = iBeaconData;
             runOnUiThread(new Runnable() {
                 public void run() {
-                    currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");                }
+                    currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
+                }
             });
-                getNextDestination();
+            getNextDestination();
         }
     }
 
     private void getNextDestination() {
-        Log.e("comeIn", "OK");
-            ParseGeoPoint sourcePoint = null, targetPoint = null;
-            for (Beacon_Data beaconData : beaconDataList) {
-                if (beaconData.getMinor().intValue() == currentBeacon.minor) {
-                    sourcePoint = beaconData.getParseGeoPoint("Location");
-                    break;
-                }
+        Log.e(MainApplication.PISUA_TAG, "comeIn OK");
+        ParseGeoPoint sourcePoint = null, targetPoint = null;
+        for (Beacon_Data beaconData : beaconDataList) {
+            if (beaconData.getMinor().intValue() == currentBeacon.minor) {
+                sourcePoint = beaconData.getParseGeoPoint("Location");
+                break;
             }
-            Log.e("firstLoop", "OK");
-            int destinationMinor = pathRouting(currentBeacon.minor - 1, destinationListView.getCheckedItemPosition()).get(1) + 1;
-            Log.e("dMinor", String.valueOf(destinationMinor));
-            for (Beacon_Data beaconData : beaconDataList) {
-                if (beaconData.getMinor().intValue() == destinationMinor) {
-                    targetPoint = beaconData.getParseGeoPoint("Location");
-                    break;
-                }
+        }
+        Log.e(MainApplication.PISUA_TAG, "firstLoop OK");
+        int destinationMinor = pathRouting(currentBeacon.minor - 1, destinationListView.getCheckedItemPosition()).get(1) + 1;
+        Log.e(MainApplication.PISUA_TAG, "dMinor : " + String.valueOf(destinationMinor));
+        for (Beacon_Data beaconData : beaconDataList) {
+            if (beaconData.getMinor().intValue() == destinationMinor) {
+                targetPoint = beaconData.getParseGeoPoint("Location");
+                break;
             }
-            Log.e("tPoint", targetPoint.toString());
+        }
+        Log.e(MainApplication.PISUA_TAG, "tPoint : " + targetPoint.toString());
 
-            //書達，我們算出的angle在這，你修改provideClue()函式改變呈現結果就好;
-        angle = 115-calAngle(sourcePoint, targetPoint);
-            Log.e("angle", String.valueOf(angle));
-            double result = angle-directionAngle;
-            provideClue(result);
+        //書達，我們算出的angle在這，你修改provideClue()函式改變呈現結果就好;
+        angle = 115 - calAngle(sourcePoint, targetPoint);
+        Log.e(MainApplication.PISUA_TAG, "angle : " + String.valueOf(angle));
+        double result = angle - directionAngle;
+        provideClue(result);
 
     }
 
     private List<Integer> pathRouting(int begin, int end) {
-        Log.e("path","come in");
+        Log.e(MainApplication.PISUA_TAG, "path come in");
         List<Integer> result = new ArrayList<>();
         //dist[i][j]=INF<==>頂點I和J之間沒有邊
         double[][] dist = new double[beaconDataList.size()][beaconDataList.size()];
@@ -307,18 +329,18 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
 
     //書達你要改的地方在這裡
     private void provideClue(double a) {
-        Log.e("Provide","OK");
-        if(a<0){
-            a+=360;
+        Log.e(MainApplication.PISUA_TAG, "Provide OK");
+        if (a < 0) {
+            a += 360;
         }
-    if(a==INF){
-        textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
-    }else if(a>0 && a<=180) {
-        int ang = (int)a;
-        textToSpeechObject.speak("Please turn left "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
-    }else if(a>180) {
-        int ang = (int) (360 - a);
-        textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
-    }
+        if (a == INF) {
+            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
+        } else if (a > 0 && a <= 180) {
+            int ang = (int) a;
+            textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+        } else if (a > 180) {
+            int ang = (int) (360 - a);
+            textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+        }
     }
 }
