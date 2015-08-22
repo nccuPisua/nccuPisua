@@ -71,6 +71,8 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     private int scanedCount = 0;
     private int lastScanedCount = -1;
 
+    private double resultAngle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -229,24 +231,25 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     }
 
     @Override
-    public void onScaned(iBeaconData iBeaconData) {
+    public void onScaned(final iBeaconData iBeaconData) {
         scanedCount++;
 
-        if (iBeaconData.minor - 1 == destinationListView.getCheckedItemPosition()) {
-            Log.e(MainApplication.PISUA_TAG, "onScaned if");
-            currentBeacon = iBeaconData;
+        if(iBeaconData.minor-1 == destinationListView.getCheckedItemPosition()){
+            if(iBeaconData.minor != currentBeacon.minor){
+                currentBeacon = iBeaconData;
+                provideClue(INF);
+            }
             runOnUiThread(new Runnable() {
                 public void run() {
-                    currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
+                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " 距離您" + iBeaconData.calDistance() + "公尺");
                 }
             });
-            provideClue(INF);
-        } else {
-            Log.e(MainApplication.PISUA_TAG, "onScaned else");
+        }else if(iBeaconData.rssi<90){
             currentBeacon = iBeaconData;
+
             runOnUiThread(new Runnable() {
                 public void run() {
-                    currentBeaconTextView.setText("現在位於Beacon" + currentBeacon.minor + " 距離您" + currentBeacon.calDistance() + "公尺");
+                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " 距離您" + iBeaconData.calDistance() + "公尺");
                 }
             });
             getNextDestination();
@@ -254,7 +257,6 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     }
 
     private void getNextDestination() {
-        Log.e(MainApplication.PISUA_TAG, "comeIn OK");
         ParseGeoPoint sourcePoint = null, targetPoint = null;
         for (Beacon_Data beaconData : beaconDataList) {
             if (beaconData.getMinor().intValue() == currentBeacon.minor) {
@@ -262,7 +264,6 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                 break;
             }
         }
-        Log.e(MainApplication.PISUA_TAG, "firstLoop OK");
         int destinationMinor = pathRouting(currentBeacon.minor - 1, destinationListView.getCheckedItemPosition()).get(1) + 1;
         Log.e(MainApplication.PISUA_TAG, "dMinor : " + String.valueOf(destinationMinor));
         for (Beacon_Data beaconData : beaconDataList) {
@@ -273,16 +274,17 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
         }
         Log.e(MainApplication.PISUA_TAG, "tPoint : " + targetPoint.toString());
 
-        //書達，我們算出的angle在這，你修改provideClue()函式改變呈現結果就好;
-        angle = 115 - calAngle(sourcePoint, targetPoint);
-        Log.e(MainApplication.PISUA_TAG, "angle : " + String.valueOf(angle));
-        double result = angle - directionAngle;
+        Log.e("tPoint", targetPoint.toString());
+        double cal = calAngle(sourcePoint, targetPoint);
+        Log.e("angle","cal:"+cal);
+        angle = 115-cal;
+        Log.e("angle","angle:"+angle);
+        double result = angle-directionAngle;
+        Log.e("angle","result:"+result);
         provideClue(result);
-
     }
 
     private List<Integer> pathRouting(int begin, int end) {
-        Log.e(MainApplication.PISUA_TAG, "path come in");
         List<Integer> result = new ArrayList<>();
         //dist[i][j]=INF<==>頂點I和J之間沒有邊
         double[][] dist = new double[beaconDataList.size()][beaconDataList.size()];
@@ -327,20 +329,25 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
         return (res >= 0 && res <= 180) ? res : (res += 360);
     }
 
-    //書達你要改的地方在這裡
     private void provideClue(double a) {
-        Log.e(MainApplication.PISUA_TAG, "Provide OK");
-        if (a < 0) {
-            a += 360;
+        Log.e("angle","a:"+a);
+        if(a<0 && a>-360){
+            resultAngle = a+360;
+        }else if(a<0 && a<-360){
+            resultAngle = a+720;
+        }else {
+            resultAngle = a;
         }
-        if (a == INF) {
+        if(resultAngle==INF){
             textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
-        } else if (a > 0 && a <= 180) {
-            int ang = (int) a;
+        }else if(resultAngle>10 && resultAngle<=180) {
+            int ang = (int)resultAngle;
+            textToSpeechObject.speak("Please turn right "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
+        }else if(resultAngle>180 && resultAngle<350) {
+            int ang = (int) (360 - resultAngle);
             textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
-        } else if (a > 180) {
-            int ang = (int) (360 - a);
-            textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+        }else if(resultAngle>0 && resultAngle<=10  || resultAngle>=350){
+            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
         }
     }
 }
