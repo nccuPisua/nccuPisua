@@ -134,12 +134,10 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                 @Override
                 public void run() {
                     beaconScanManager.stopScaniBeacon();
-
+                    beaconScanManager.startScaniBeacon(1000);
                     scanBeacon(true);
                 }
             }, SCAN_PERIOD);
-
-            beaconScanManager.startScaniBeacon(5000);
         } else {
             beaconScanManager.stopScaniBeacon();
         }
@@ -232,6 +230,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
 
     @Override
     public void onScaned(final iBeaconData iBeaconData) {
+        Log.e(MainApplication.PISUA_TAG , "onScaned");
         scanedCount++;
 
         if(iBeaconData.minor-1 == destinationListView.getCheckedItemPosition()){
@@ -275,6 +274,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
         Log.e(MainApplication.PISUA_TAG, "tPoint : " + targetPoint.toString());
 
         Log.e("tPoint", targetPoint.toString());
+        Log.e(MainApplication.PISUA_TAG, "source point:" + sourcePoint.toString());
         double cal = calAngle(sourcePoint, targetPoint);
         Log.e("angle","cal:"+cal);
         angle = 115-cal;
@@ -312,6 +312,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
         result.add(begin);
         findPath(path, result, begin, end);
         result.add(end);
+        Log.e(MainApplication.PISUA_TAG,"path:" + result);
         return result;
     }
 
