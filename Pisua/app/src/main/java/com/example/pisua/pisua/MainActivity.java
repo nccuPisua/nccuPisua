@@ -5,6 +5,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
@@ -57,21 +59,25 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
     private ArrayAdapter destinationAdapter;
 
     private List<String> destinationList = new ArrayList<>();
-
+    //DB抓下來的beacon資料存在此
     private List<Beacon_Data> beaconDataList = new ArrayList<>();
 
     private iBeaconData currentBeacon;
 
     private double[][] pathMatrix;
-
+    //無限大的double，僅是為了不用重複打Double.MAX_VALUE，方便用
     private double INF = Double.MAX_VALUE;
 
     private double angle = -1;
 
     private int scanedCount = 0;
+
     private int lastScanedCount = -1;
 
     private double resultAngle;
+
+    //播放音效相關
+    private SoundPool soundPool;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,6 +131,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                     }
                 });
         currentBeacon = new iBeaconData();
+        soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 5);
     }
 
     private void scanBeacon(final boolean enable) {
@@ -312,7 +319,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
         result.add(begin);
         findPath(path, result, begin, end);
         result.add(end);
-        Log.e(MainApplication.PISUA_TAG,"path:" + result);
+        Log.e(MainApplication.PISUA_TAG, "path:" + result);
         return result;
     }
 
@@ -340,7 +347,9 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
             resultAngle = a;
         }
         if(resultAngle==INF){
-            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
+            //textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
+            int alertId = soundPool.load(this, R.raw.alreadyhere, 1);
+            soundPool.play(alertId, 1.0F, 1.0F, 0, 0, 1.0F);
         }else if(resultAngle>10 && resultAngle<=180) {
             int ang = (int)resultAngle;
             textToSpeechObject.speak("Please turn right "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
