@@ -107,6 +107,21 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         destinationAdapter = new SlidePagerAdapter(getSupportFragmentManager());
         destinationViewPager.setAdapter(destinationAdapter);
+        destinationViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                Toast.makeText(MainActivity.this, destinationList.get(position), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         List sensors = sensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
