@@ -9,16 +9,19 @@
         android:layout_height="wrap_content" />
     <TextView android:id="@+id/current_beacon_text_view" android:layout_width="wrap_content"
         android:layout_height="wrap_content" android:layout_below="@+id/direction_text_view"/>
-    <ListView
-        android:id="@+id/destination_list_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:layout_below="@+id/current_beacon_text_view"></ListView>
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/destination_view_pager"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_below="@+id/current_beacon_text_view"/>
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/button"
         android:text="語音提示"
-        android:layout_below="@+id/destination_list_view"/>
+        android:layout_below="@+id/destination_view_pager"/>
 
 
 </RelativeLayout>

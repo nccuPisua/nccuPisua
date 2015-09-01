@@ -1,6 +1,6 @@
 package com.example.pisua.pisua;
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -10,12 +10,19 @@ import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.THLight.USBeacon.App.Lib.iBeaconData;
 import com.THLight.USBeacon.App.Lib.iBeaconScanManager;
@@ -30,7 +37,7 @@ import java.util.List;
 import java.util.Locale;
 
 
-public class MainActivity extends Activity implements SensorEventListener, iBeaconScanManager.OniBeaconScan {
+public class MainActivity extends ActionBarActivity implements SensorEventListener, iBeaconScanManager.OniBeaconScan {
 
     private Handler mHandler;
 
@@ -54,9 +61,9 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
 
     private SensorManager sensorManager;
 
-    private ListView destinationListView;
+    private ViewPager destinationViewPager;
 
-    private ArrayAdapter destinationAdapter;
+    private PagerAdapter destinationAdapter;
 
     private List<String> destinationList = new ArrayList<>();
     //DB抓下來的beacon資料存在此
@@ -96,19 +103,10 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
         directionTextView = (TextView) findViewById(R.id.direction_text_view);
         currentBeaconTextView = (TextView) findViewById(R.id.current_beacon_text_view);
 
-        destinationListView = (ListView) findViewById(R.id.destination_list_view);
-        destinationListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        //設定listview為單選，並把要顯示的文字丟入layout
+        destinationViewPager = (ViewPager) findViewById(R.id.destination_view_pager);
 
-        destinationAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_single_choice, destinationList);
-        destinationListView.setAdapter(destinationAdapter);
-        destinationListView.setItemChecked(0, true);
-        destinationListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-            }
-        });
+        destinationAdapter = new SlidePagerAdapter(getSupportFragmentManager());
+        destinationViewPager.setAdapter(destinationAdapter);
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         List sensors = sensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
@@ -184,8 +182,10 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                 int resultsSize = results.size();
                 pathMatrix = new double[resultsSize][resultsSize];
 
-                for (int i = 1; i <= resultsSize; i++) {
-                    destinationList.add("我要去Beacon" + i);
+                for (int i = 0; i < resultsSize; i++) {
+                    if(results.get(i).getString("Destination")!=null){
+                        destinationList.add(results.get(i).getString("Destination"));
+                    }
                 }
                 destinationAdapter.notifyDataSetChanged();
                 for (int i = 0; i < resultsSize; i++) {
@@ -240,7 +240,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
         Log.e(MainApplication.PISUA_TAG , "onScaned");
         scanedCount++;
 
-        if(iBeaconData.minor-1 == destinationListView.getCheckedItemPosition()){
+        if(iBeaconData.minor-1 == destinationViewPager.getCurrentItem()){
             if(iBeaconData.minor != currentBeacon.minor){
                 currentBeacon = iBeaconData;
                 provideClue(INF);
@@ -270,7 +270,7 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
                 break;
             }
         }
-        int destinationMinor = pathRouting(currentBeacon.minor - 1, destinationListView.getCheckedItemPosition()).get(1) + 1;
+        int destinationMinor = pathRouting(currentBeacon.minor - 1, destinationViewPager.getCurrentItem()).get(1) + 1;
         Log.e(MainApplication.PISUA_TAG, "dMinor : " + String.valueOf(destinationMinor));
         for (Beacon_Data beaconData : beaconDataList) {
             if (beaconData.getMinor().intValue() == destinationMinor) {
@@ -358,6 +358,52 @@ public class MainActivity extends Activity implements SensorEventListener, iBeac
             textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
         }else if(resultAngle>0 && resultAngle<=10  || resultAngle>=350){
             textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }
+
+    private class SlidePagerAdapter extends FragmentStatePagerAdapter {
+
+        public SlidePagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int i) {
+            return new IntroFragment(destinationList.get(i));
+        }
+
+        @Override
+        public int getCount() {
+            return destinationList.size();
+        }
+    }
+
+    public static class IntroFragment extends Fragment {
+
+        private String destinationTitle;
+
+        public IntroFragment() {
+        }
+
+        @SuppressLint("ValidFragment")
+        public IntroFragment(String destinationTitle) {
+            this.destinationTitle = destinationTitle;
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_destination, container, false);
+            TextView title = (TextView) rootView.findViewById(R.id.direction_text_view);
+
+            rootView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(getActivity(), destinationTitle, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            title.setText(destinationTitle);
+            return rootView;
         }
     }
 }
