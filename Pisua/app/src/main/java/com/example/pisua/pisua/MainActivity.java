@@ -105,6 +105,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         destinationViewPager = (ViewPager) findViewById(R.id.destination_view_pager);
 
+        soundPool = new SoundPool(11, AudioManager.STREAM_MUSIC, 5);
+
         destinationAdapter = new SlidePagerAdapter(getSupportFragmentManager());
         destinationViewPager.setAdapter(destinationAdapter);
         destinationViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -115,6 +117,26 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             @Override
             public void onPageSelected(int position) {
                 Toast.makeText(MainActivity.this, destinationList.get(position), Toast.LENGTH_SHORT).show();
+                int[] soundList = new int[18] ;
+                //soundList[0] = soundPool.load(MainActivity.this, R.raw.beacon1, 1);
+                soundList[1] = soundPool.load(MainActivity.this, R.raw.beacon2, 1);
+                //soundList[2] = soundPool.load(MainActivity.this, R.raw.beacon3, 1);
+                soundList[3] = soundPool.load(MainActivity.this, R.raw.beacon4, 1);
+                //soundList[4] = soundPool.load(MainActivity.this, R.raw.beacon5, 1);
+                soundList[5] = soundPool.load(MainActivity.this, R.raw.beacon6, 1);
+                //soundList[6] = soundPool.load(MainActivity.this, R.raw.beacon7, 1);
+                soundList[7] = soundPool.load(MainActivity.this, R.raw.beacon8, 1);
+                soundList[8] = soundPool.load(MainActivity.this, R.raw.beacon9, 1);
+                soundList[9] = soundPool.load(MainActivity.this, R.raw.beacon10, 1);
+                //soundList[10] = soundPool.load(MainActivity.this, R.raw.beacon11, 1);
+                //soundList[11] = soundPool.load(MainActivity.this, R.raw.beacon12, 1);
+                soundList[12] = soundPool.load(MainActivity.this, R.raw.beacon13, 1);
+                //soundList[13] = soundPool.load(MainActivity.this, R.raw.beacon14, 1);
+                //soundList[14] = soundPool.load(MainActivity.this, R.raw.beacon15, 1);
+                soundList[15] = soundPool.load(MainActivity.this, R.raw.beacon16, 1);
+                soundList[16] = soundPool.load(MainActivity.this, R.raw.beacon17, 1);
+                soundList[17] = soundPool.load(MainActivity.this, R.raw.beacon18, 1);
+                soundPool.play(soundList[position], 1.0F, 1.0F, 0, 0, 1.0F);
             }
 
             @Override
@@ -144,7 +166,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                     }
                 });
         currentBeacon = new iBeaconData();
-        soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 5);
+
     }
 
     private void scanBeacon(final boolean enable) {
