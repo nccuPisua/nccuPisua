@@ -13,8 +13,9 @@ import android.speech.tts.TextToSpeech;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.PagerTabStrip;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -62,6 +63,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private SensorManager sensorManager;
 
     private ViewPager destinationViewPager;
+    private PagerTabStrip destinationViewPagerTab;
 
     private PagerAdapter destinationAdapter;
 
@@ -126,6 +128,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         currentBeaconTextView = (TextView) findViewById(R.id.current_beacon_text_view);
 
         destinationViewPager = (ViewPager) findViewById(R.id.destination_view_pager);
+        destinationViewPagerTab = (PagerTabStrip) findViewById(R.id.destination_view_pager_tab);
 
         destinationAdapter = new SlidePagerAdapter(getSupportFragmentManager());
         destinationViewPager.setAdapter(destinationAdapter);
@@ -400,7 +403,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         }
     }
 
-    private class SlidePagerAdapter extends FragmentStatePagerAdapter {
+    private class SlidePagerAdapter extends FragmentPagerAdapter {
 
         public SlidePagerAdapter(FragmentManager fm) {
             super(fm);
@@ -409,6 +412,11 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         @Override
         public Fragment getItem(int i) {
             return new IntroFragment(destinationList.get(i));
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return destinationList.get(position);
         }
 
         @Override
