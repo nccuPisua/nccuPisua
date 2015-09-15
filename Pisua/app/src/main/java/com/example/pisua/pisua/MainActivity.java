@@ -6,6 +6,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.Handler;
@@ -88,6 +89,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     //播放音效相關
     private SoundPool soundPool;
     private int[] soundList = new int[18] ;
+    private AudioManager mAudioManager;
+    private MediaPlayer player;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,9 +102,19 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     }
 
+    //釋放資源
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        player.release();
+        soundPool.release();
+    }
+
     private void init() {
 
-        soundPool = new SoundPool(11, AudioManager.STREAM_MUSIC, 5);
+        soundPool = new SoundPool(12, AudioManager.STREAM_MUSIC, 5);
+        player = new MediaPlayer();Ｓ
+
 
         //soundList[0] = soundPool.load(MainActivity.this, R.raw.beacon1, 1);
         soundList[1] = soundPool.load(MainActivity.this, R.raw.beacon2, 1);
@@ -140,8 +153,18 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             @Override
             public void onPageSelected(int position) {
                 Toast.makeText(MainActivity.this, destinationList.get(position), Toast.LENGTH_SHORT).show();
-                soundPool.autoPause();
-                soundPool.play(soundList[position], 1.0F, 1.0F, 0, 0, 1.0F);
+//                soundPool.autoPause();
+//                soundPool.play(soundList[position], 1.0F, 1.0F, 0, 0, 1.0F);
+
+                //這種寫法可以不用事先灌音效檔在raw裡面，可以直接string to speech，但不知為什麼我測試的時候都沒聲音
+                String mainText = destinationList.get(position);
+                try{
+                    player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    player.setDataSource("http://translate.google.com/translate_tts?tl=zh-TW&q=" + mainText +"&ie=UTF-8");
+                    player.prepare();
+                    player.start();
+                }catch (Exception e){
+                }
             }
 
             @Override
@@ -394,12 +417,30 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             soundPool.play(alertId, 1.0F, 1.0F, 0, 0, 1.0F);
         }else if(resultAngle>10 && resultAngle<=180) {
             int ang = (int)resultAngle;
-            textToSpeechObject.speak("Please turn right "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
+//            textToSpeechObject.speak("Please turn right "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
+            String mainText = "請往右轉"+ang+"度";
+            try{
+                player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                player.setDataSource("http://translate.google.com/translate_tts?tl=zh-TW&q=" + mainText +"&ie=UTF-8");
+                player.prepare();
+                player.start();
+            }catch (Exception e){
+            }
         }else if(resultAngle>180 && resultAngle<350) {
             int ang = (int) (360 - resultAngle);
-            textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+//            textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+            String mainText = "請往左轉"+ang+"度";
+            try{
+                player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                player.setDataSource("http://translate.google.com/translate_tts?tl=zh-TW&q=" + mainText +"&ie=UTF-8");
+                player.prepare();
+                player.start();
+            }catch (Exception e){
+            }
         }else if(resultAngle>0 && resultAngle<=10  || resultAngle>=350){
-            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+//            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+            int alertId = soundPool.load(this, R.raw.forward, 1);
+            soundPool.play(alertId, 1.0F, 1.0F, 0, 0, 1.0F);
         }
     }
 
