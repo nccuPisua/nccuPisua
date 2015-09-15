@@ -6,7 +6,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.Handler;
@@ -35,6 +34,7 @@ import com.parse.ParseGeoPoint;
 import com.parse.ParseQuery;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -71,6 +71,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private List<String> destinationList = new ArrayList<>();
     //DB抓下來的beacon資料存在此
     private List<Beacon_Data> beaconDataList = new ArrayList<>();
+    private HashMap<String,Number> destinationMinorList = new HashMap<>();
 
     private iBeaconData currentBeacon;
 
@@ -86,11 +87,11 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private double resultAngle;
 
+    private int alreadyhere_ogg, forward_ogg;
+
     //播放音效相關
     private SoundPool soundPool;
-    private int[] soundList = new int[18] ;
-    private AudioManager mAudioManager;
-    private MediaPlayer player;
+    private int[] soundList = new int[14];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,36 +105,32 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     //釋放資源
     @Override
-    protected void onDestroy(){
+    protected void onDestroy() {
         super.onDestroy();
-        player.release();
         soundPool.release();
     }
 
     private void init() {
 
-        soundPool = new SoundPool(12, AudioManager.STREAM_MUSIC, 5);
-        player = new MediaPlayer();Ｓ
+        soundPool = new SoundPool(16, AudioManager.STREAM_MUSIC, 5);
 
+        alreadyhere_ogg = soundPool.load(MainActivity.this, R.raw.alreadyhere, 1);
+        forward_ogg = soundPool.load(MainActivity.this, R.raw.forward, 1);
 
-        //soundList[0] = soundPool.load(MainActivity.this, R.raw.beacon1, 1);
+        soundList[0] = soundPool.load(MainActivity.this, R.raw.beacon1, 1);
         soundList[1] = soundPool.load(MainActivity.this, R.raw.beacon2, 1);
-        //soundList[2] = soundPool.load(MainActivity.this, R.raw.beacon3, 1);
-        soundList[3] = soundPool.load(MainActivity.this, R.raw.beacon4, 1);
-        //soundList[4] = soundPool.load(MainActivity.this, R.raw.beacon5, 1);
-        soundList[5] = soundPool.load(MainActivity.this, R.raw.beacon6, 1);
-        //soundList[6] = soundPool.load(MainActivity.this, R.raw.beacon7, 1);
-        soundList[7] = soundPool.load(MainActivity.this, R.raw.beacon8, 1);
-        soundList[8] = soundPool.load(MainActivity.this, R.raw.beacon9, 1);
-        soundList[9] = soundPool.load(MainActivity.this, R.raw.beacon10, 1);
-        //soundList[10] = soundPool.load(MainActivity.this, R.raw.beacon11, 1);
-        //soundList[11] = soundPool.load(MainActivity.this, R.raw.beacon12, 1);
-        soundList[12] = soundPool.load(MainActivity.this, R.raw.beacon13, 1);
-        //soundList[13] = soundPool.load(MainActivity.this, R.raw.beacon14, 1);
-        //soundList[14] = soundPool.load(MainActivity.this, R.raw.beacon15, 1);
-        soundList[15] = soundPool.load(MainActivity.this, R.raw.beacon16, 1);
-        soundList[16] = soundPool.load(MainActivity.this, R.raw.beacon17, 1);
-        soundList[17] = soundPool.load(MainActivity.this, R.raw.beacon18, 1);
+        soundList[2] = soundPool.load(MainActivity.this, R.raw.beacon4, 1);
+        soundList[3] = soundPool.load(MainActivity.this, R.raw.beacon5, 1);
+        soundList[4] = soundPool.load(MainActivity.this, R.raw.beacon6, 1);
+        soundList[5] = soundPool.load(MainActivity.this, R.raw.beacon7, 1);
+        soundList[6] = soundPool.load(MainActivity.this, R.raw.beacon8, 1);
+        soundList[7] = soundPool.load(MainActivity.this, R.raw.beacon9, 1);
+        soundList[8] = soundPool.load(MainActivity.this, R.raw.beacon10, 1);
+        soundList[9] = soundPool.load(MainActivity.this, R.raw.beacon11, 1);
+        soundList[10] = soundPool.load(MainActivity.this, R.raw.beacon13, 1);
+        soundList[11] = soundPool.load(MainActivity.this, R.raw.beacon16, 1);
+        soundList[12] = soundPool.load(MainActivity.this, R.raw.beacon17, 1);
+        soundList[13] = soundPool.load(MainActivity.this, R.raw.beacon18, 1);
 
         mHandler = new Handler();
 
@@ -152,19 +149,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
             @Override
             public void onPageSelected(int position) {
-                Toast.makeText(MainActivity.this, destinationList.get(position), Toast.LENGTH_SHORT).show();
-//                soundPool.autoPause();
-//                soundPool.play(soundList[position], 1.0F, 1.0F, 0, 0, 1.0F);
-
-                //這種寫法可以不用事先灌音效檔在raw裡面，可以直接string to speech，但不知為什麼我測試的時候都沒聲音
-                String mainText = destinationList.get(position);
-                try{
-                    player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                    player.setDataSource("http://translate.google.com/translate_tts?tl=zh-TW&q=" + mainText +"&ie=UTF-8");
-                    player.prepare();
-                    player.start();
-                }catch (Exception e){
-                }
+                soundPool.autoPause();
+                soundPool.play(soundList[position], 1.0F, 1.0F, 0, 0, 1.0F);
             }
 
             @Override
@@ -248,8 +234,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 pathMatrix = new double[resultsSize][resultsSize];
 
                 for (int i = 0; i < resultsSize; i++) {
-                    if(results.get(i).getString("Destination")!=null){
+                    if (results.get(i).getString("Destination") != null) {
                         destinationList.add(results.get(i).getString("Destination"));
+                        destinationMinorList.put(results.get(i).getString("Destination"),results.get(i).getMinor());
                     }
                 }
                 destinationAdapter.notifyDataSetChanged();
@@ -302,11 +289,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     @Override
     public void onScaned(final iBeaconData iBeaconData) {
-        Log.e(MainApplication.PISUA_TAG , "onScaned");
+        Log.e(MainApplication.PISUA_TAG, "onScaned");
         scanedCount++;
 
-        if(iBeaconData.minor-1 == destinationViewPager.getCurrentItem()){
-            if(iBeaconData.minor != currentBeacon.minor){
+        int minor = destinationMinorList.get(destinationList.get(destinationViewPager.getCurrentItem())).intValue();
+        if (iBeaconData.minor == minor) {
+            if (iBeaconData.minor != currentBeacon.minor) {
                 currentBeacon = iBeaconData;
                 provideClue(INF);
             }
@@ -315,12 +303,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                     currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " 距離您" + iBeaconData.calDistance() + "公尺");
                 }
             });
-        }else if(iBeaconData.rssi<90){
+        } else if (iBeaconData.rssi > -90) {
             currentBeacon = iBeaconData;
 
             runOnUiThread(new Runnable() {
                 public void run() {
-                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " 距離您" + iBeaconData.calDistance() + "公尺");
+                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " \n距離您" + iBeaconData.calDistance() + "公尺");
                 }
             });
             getNextDestination();
@@ -348,11 +336,11 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         Log.e("tPoint", targetPoint.toString());
         Log.e(MainApplication.PISUA_TAG, "source point:" + sourcePoint.toString());
         double cal = calAngle(sourcePoint, targetPoint);
-        Log.e("angle","cal:"+cal);
-        angle = 115-cal;
-        Log.e("angle","angle:"+angle);
-        double result = angle-directionAngle;
-        Log.e("angle","result:"+result);
+        Log.e("angle", "cal:" + cal);
+        angle = 115 - cal;
+        Log.e("angle", "angle:" + angle);
+        double result = angle - directionAngle;
+        Log.e("angle", "result:" + result);
         provideClue(result);
     }
 
@@ -403,44 +391,32 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     }
 
     private void provideClue(double a) {
-        Log.e("angle","a:"+a);
-        if(a<0 && a>-360){
-            resultAngle = a+360;
-        }else if(a<0 && a<-360){
-            resultAngle = a+720;
-        }else {
+        Log.e("angle", "a:" + a);
+        if (a < 0 && a > -360) {
+            resultAngle = a + 360;
+        } else if (a < 0 && a < -360) {
+            resultAngle = a + 720;
+        } else {
             resultAngle = a;
         }
-        if(resultAngle==INF){
-            //textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
-            int alertId = soundPool.load(this, R.raw.alreadyhere, 1);
-            soundPool.play(alertId, 1.0F, 1.0F, 0, 0, 1.0F);
-        }else if(resultAngle>10 && resultAngle<=180) {
-            int ang = (int)resultAngle;
-//            textToSpeechObject.speak("Please turn right "+ang+" degrees", TextToSpeech.QUEUE_FLUSH, null);
-            String mainText = "請往右轉"+ang+"度";
-            try{
-                player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                player.setDataSource("http://translate.google.com/translate_tts?tl=zh-TW&q=" + mainText +"&ie=UTF-8");
-                player.prepare();
-                player.start();
-            }catch (Exception e){
-            }
-        }else if(resultAngle>180 && resultAngle<350) {
+        if (resultAngle == INF) {
+//            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
+
+            soundPool.autoPause();
+            soundPool.play(alreadyhere_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+
+        } else if (resultAngle > 10 && resultAngle <= 180) {
+            int ang = (int) resultAngle;
+            textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+        } else if (resultAngle > 180 && resultAngle < 350) {
             int ang = (int) (360 - resultAngle);
-//            textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
-            String mainText = "請往左轉"+ang+"度";
-            try{
-                player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                player.setDataSource("http://translate.google.com/translate_tts?tl=zh-TW&q=" + mainText +"&ie=UTF-8");
-                player.prepare();
-                player.start();
-            }catch (Exception e){
-            }
-        }else if(resultAngle>0 && resultAngle<=10  || resultAngle>=350){
+            textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+        } else if (resultAngle > 0 && resultAngle <= 10 || resultAngle >= 350) {
 //            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
-            int alertId = soundPool.load(this, R.raw.forward, 1);
-            soundPool.play(alertId, 1.0F, 1.0F, 0, 0, 1.0F);
+//            soundPool.autoPause();
+
+            soundPool.play(forward_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+
         }
     }
 
