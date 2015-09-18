@@ -1,6 +1,5 @@
 package com.example.pisua.pisua.activity;
 
-import android.annotation.SuppressLint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -10,18 +9,14 @@ import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.PagerTabStrip;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,9 +39,11 @@ import java.util.Locale;
 
 public class MainActivity extends ActionBarActivity implements SensorEventListener, iBeaconScanManager.OniBeaconScan {
 
-    private static Handler mHandler;
+    private Handler mHandler;
 
     private boolean indoorMode = true;
+
+    private long stopNavigationTime;
 
     private static final int INDOOR_CHECK_PERIOD = 20 * 1000;
     private static final int SCAN_PERIOD = 5000;
@@ -56,20 +53,27 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     //顯示目前位於哪個beacon
     private TextView currentBeaconTextView;
 
+    private ProgressBar calculationProgressbar;
+
+    private RelativeLayout navigationLayout;
+    private TextView navigationCurrentLoactionTextView;
+    private TextView navigationAngleTextView;
+    private TextView navigationDistanceTextView;
+
     //目前方位角度
     private float directionAngle;
 
     //Speech Object
     private TextToSpeech textToSpeechObject;
 
-    private static iBeaconScanManager beaconScanManager;
+    private iBeaconScanManager beaconScanManager;
 
     private SensorManager sensorManager;
 
     private ViewPager destinationViewPager;
     private PagerTabStrip destinationViewPagerTab;
 
-    private PagerAdapter destinationAdapter;
+    private SlidePagerAdapter destinationAdapter;
 
     private List<String> destinationList = new ArrayList<>();
     //DB抓下來的beacon資料存在此
@@ -140,11 +144,60 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         directionTextView = (TextView) findViewById(R.id.direction_text_view);
         currentBeaconTextView = (TextView) findViewById(R.id.current_beacon_text_view);
 
+        calculationProgressbar = (ProgressBar) findViewById(R.id.calculating_progressbar);
+
+        navigationLayout = (RelativeLayout) findViewById(R.id.navigation_hint_layout);
+        navigationLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                StopNavigation();
+            }
+        });
+
+        navigationCurrentLoactionTextView = (TextView) findViewById(R.id.navigation_current_loaction_text_view);
+        navigationAngleTextView = (TextView) findViewById(R.id.navigation_angle_text_view);
+        navigationDistanceTextView = (TextView) findViewById(R.id.navigation_distance_text_view);
+
         destinationViewPager = (ViewPager) findViewById(R.id.destination_view_pager);
         destinationViewPagerTab = (PagerTabStrip) findViewById(R.id.destination_view_pager_tab);
 
         destinationAdapter = new SlidePagerAdapter(getSupportFragmentManager());
         destinationViewPager.setAdapter(destinationAdapter);
+
+        destinationViewPager.setOnTouchListener(new View.OnTouchListener() {
+            private boolean moved;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    moved = false;
+                }
+                if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    moved = true;
+                }
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    if (!moved) {
+                        v.performClick();
+                    }
+                }
+                return false;
+            }
+        });
+
+        destinationViewPager.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                destinationViewPager.setVisibility(View.GONE);
+                scanBeacon(true);
+
+//                navigationLayout.setVisibility(View.VISIBLE);
+
+                Toast.makeText(MainActivity.this, "計算路徑中", Toast.LENGTH_SHORT).show();
+                calculationProgressbar.setVisibility(View.VISIBLE);
+                currentBeaconTextView.setText("前往 " + destinationList.get(destinationViewPager.getCurrentItem()));
+            }
+        });
+
         destinationViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -186,7 +239,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     }
 
-    public static void scanBeacon(final boolean enable) {
+    private void scanBeacon(final boolean enable) {
         if (enable) {
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
@@ -242,6 +295,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                         destinationMinorList.put(results.get(i).getString("Destination"), results.get(i).getMinor());
                     }
                 }
+
+                destinationAdapter.setDestinationList(destinationList);
                 destinationAdapter.notifyDataSetChanged();
                 for (int i = 0; i < resultsSize; i++) {
                     for (int j = 0; j < resultsSize; j++) {
@@ -299,7 +354,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         runOnUiThread(new Runnable() {
             public void run() {
-                currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + "\n 距離您" + Math.round(iBeaconData.calDistance()) + "公尺");
+                navigationCurrentLoactionTextView.setText("現在位於Beacon" + iBeaconData.minor + "\n 距離您" + Math.round(iBeaconData.calDistance()) + "公尺");
             }
         });
 
@@ -309,23 +364,13 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 currentBeacon = iBeaconData;
                 provideClue(INF);
             }
-            runOnUiThread(new Runnable() {
-                public void run() {
-//                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " 距離您" + iBeaconData.calDistance() + "公尺");
-//                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor);
-                }
-            });
-        } else if (iBeaconData.calDistance()<1) {
+        } else if (iBeaconData.calDistance() < 1) {
             currentBeacon = iBeaconData;
-
-            runOnUiThread(new Runnable() {
-                public void run() {
-//                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " \n距離您" + iBeaconData.calDistance() + "公尺");
-//                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor);
-                }
-            });
             getNextDestination();
         }
+
+        calculationProgressbar.setVisibility(View.GONE);
+        navigationLayout.setVisibility(View.VISIBLE);
     }
 
     private void getNextDestination() {
@@ -413,24 +458,60 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             resultAngle = a;
         }
         if (resultAngle == INF) {
-//            textToSpeechObject.speak("You are already here", TextToSpeech.QUEUE_FLUSH, null);
-
             soundPool.autoPause();
             soundPool.play(alreadyhere_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
 
         } else if (resultAngle > 10 && resultAngle <= 180) {
-            int ang = (int) resultAngle;
+            final int ang = (int) resultAngle;
             textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    navigationAngleTextView.setText("請往右轉 " + ang + "度");
+                }
+            });
+
         } else if (resultAngle > 180 && resultAngle < 350) {
-            int ang = (int) (360 - resultAngle);
+            final int ang = (int) (360 - resultAngle);
             textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    navigationAngleTextView.setText("請往左轉 " + ang + "度");
+                }
+            });
+
         } else if (resultAngle > 0 && resultAngle <= 10 || resultAngle >= 350) {
 //            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
 //            soundPool.autoPause();
-
+            //這裡會一直重複講
             soundPool.play(forward_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
 
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    navigationAngleTextView.setText("請往前走");
+                }
+            });
         }
     }
 
+    private void StopNavigation() {
+        if ((System.currentTimeMillis() - stopNavigationTime) > 2000) {
+
+            //點擊間隔大於兩秒才停止
+            Toast.makeText(MainActivity.this, "再按一次停止導航", Toast.LENGTH_SHORT).show();
+            stopNavigationTime = System.currentTimeMillis();
+
+        } else {
+            //連續點擊兩次，確定停止導航
+
+            navigationLayout.setVisibility(View.GONE);
+            calculationProgressbar.setVisibility(View.GONE);
+            destinationViewPager.setVisibility(View.VISIBLE);
+            scanBeacon(false);
+
+            Toast.makeText(MainActivity.this, "停止導航", Toast.LENGTH_SHORT).show();
+            currentBeaconTextView.setText("點擊選擇目的地");
+        }
+    }
 }
