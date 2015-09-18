@@ -1,4 +1,4 @@
-package com.example.pisua.pisua;
+package com.example.pisua.pisua.activity;
 
 import android.annotation.SuppressLint;
 import android.hardware.Sensor;
@@ -27,6 +27,9 @@ import android.widget.Toast;
 
 import com.THLight.USBeacon.App.Lib.iBeaconData;
 import com.THLight.USBeacon.App.Lib.iBeaconScanManager;
+import com.example.pisua.pisua.MainApplication;
+import com.example.pisua.pisua.R;
+import com.example.pisua.pisua.adapter.SlidePagerAdapter;
 import com.example.pisua.pisua.object.parse.Beacon_Data;
 import com.parse.FindCallback;
 import com.parse.ParseException;
@@ -41,12 +44,12 @@ import java.util.Locale;
 
 public class MainActivity extends ActionBarActivity implements SensorEventListener, iBeaconScanManager.OniBeaconScan {
 
-    private Handler mHandler;
+    private static Handler mHandler;
 
     private boolean indoorMode = true;
 
-    private final int SCAN_PERIOD = 5000;
-    private final int INDOOR_CHECK_PERIOD = 20 * 1000;
+    private static final int INDOOR_CHECK_PERIOD = 20 * 1000;
+    private static final int SCAN_PERIOD = 5000;
 
     //顯示方位
     private TextView directionTextView;
@@ -59,7 +62,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     //Speech Object
     private TextToSpeech textToSpeechObject;
 
-    private iBeaconScanManager beaconScanManager;
+    private static iBeaconScanManager beaconScanManager;
 
     private SensorManager sensorManager;
 
@@ -71,7 +74,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private List<String> destinationList = new ArrayList<>();
     //DB抓下來的beacon資料存在此
     private List<Beacon_Data> beaconDataList = new ArrayList<>();
-    private HashMap<String,Number> destinationMinorList = new HashMap<>();
+    private HashMap<String, Number> destinationMinorList = new HashMap<>();
 
     private iBeaconData currentBeacon;
 
@@ -183,7 +186,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     }
 
-    private void scanBeacon(final boolean enable) {
+    public static void scanBeacon(final boolean enable) {
         if (enable) {
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
@@ -227,7 +230,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             @Override
             public void done(List<Beacon_Data> results, ParseException e) {
                 beaconDataList.addAll(results);
-                scanBeacon(true);
+//                scanBeacon(true);
                 indoorCheck();
 
                 int resultsSize = results.size();
@@ -236,7 +239,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 for (int i = 0; i < resultsSize; i++) {
                     if (results.get(i).getString("Destination") != null) {
                         destinationList.add(results.get(i).getString("Destination"));
-                        destinationMinorList.put(results.get(i).getString("Destination"),results.get(i).getMinor());
+                        destinationMinorList.put(results.get(i).getString("Destination"), results.get(i).getMinor());
                     }
                 }
                 destinationAdapter.notifyDataSetChanged();
@@ -253,6 +256,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                         pathMatrix[i][y] = getLength(i, y);
                     }
                 }
+
+                Toast.makeText(MainActivity.this, "系統啟動，左右滑動選擇目的地並點擊", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -292,6 +297,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         Log.e(MainApplication.PISUA_TAG, "onScaned");
         scanedCount++;
 
+        runOnUiThread(new Runnable() {
+            public void run() {
+                currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + "\n 距離您" + Math.round(iBeaconData.calDistance()) + "公尺");
+            }
+        });
+
         int minor = destinationMinorList.get(destinationList.get(destinationViewPager.getCurrentItem())).intValue();
         if (iBeaconData.minor == minor) {
             if (iBeaconData.minor != currentBeacon.minor) {
@@ -300,15 +311,17 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             }
             runOnUiThread(new Runnable() {
                 public void run() {
-                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " 距離您" + iBeaconData.calDistance() + "公尺");
+//                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " 距離您" + iBeaconData.calDistance() + "公尺");
+//                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor);
                 }
             });
-        } else if (iBeaconData.rssi > -90) {
+        } else if (iBeaconData.calDistance()<1) {
             currentBeacon = iBeaconData;
 
             runOnUiThread(new Runnable() {
                 public void run() {
-                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " \n距離您" + iBeaconData.calDistance() + "公尺");
+//                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor + " \n距離您" + iBeaconData.calDistance() + "公尺");
+//                    currentBeaconTextView.setText("現在位於Beacon" + iBeaconData.minor);
                 }
             });
             getNextDestination();
@@ -323,7 +336,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 break;
             }
         }
-        int destinationMinor = pathRouting(currentBeacon.minor - 1, destinationViewPager.getCurrentItem()).get(1) + 1;
+        int destinationMinor = pathRouting(currentBeacon.minor - 1, destinationMinorList.get(destinationList.get(destinationViewPager.getCurrentItem())).intValue() - 1).get(1) + 1;
         Log.e(MainApplication.PISUA_TAG, "dMinor : " + String.valueOf(destinationMinor));
         for (Beacon_Data beaconData : beaconDataList) {
             if (beaconData.getMinor().intValue() == destinationMinor) {
@@ -420,54 +433,4 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         }
     }
 
-    private class SlidePagerAdapter extends FragmentPagerAdapter {
-
-        public SlidePagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int i) {
-            return new IntroFragment(destinationList.get(i));
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return destinationList.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return destinationList.size();
-        }
-    }
-
-    public static class IntroFragment extends Fragment {
-
-        private String destinationTitle;
-
-        public IntroFragment() {
-        }
-
-        @SuppressLint("ValidFragment")
-        public IntroFragment(String destinationTitle) {
-            this.destinationTitle = destinationTitle;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_destination, container, false);
-            TextView title = (TextView) rootView.findViewById(R.id.direction_text_view);
-
-            rootView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(getActivity(), destinationTitle, Toast.LENGTH_SHORT).show();
-                }
-            });
-
-            title.setText(destinationTitle);
-            return rootView;
-        }
-    }
 }

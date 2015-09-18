@@ -22,7 +22,7 @@
         android:layout_centerHorizontal="true"
         android:background="@drawable/corner_textview"
         android:gravity="center"
-        android:text="test"
+        android:text="點擊選擇目的地"
         android:textColor="@android:color/white"
         android:textSize="30dp"
         android:textStyle="bold" />
