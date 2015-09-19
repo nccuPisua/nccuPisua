@@ -94,7 +94,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private double resultAngle;
 
-    private int alreadyhere_ogg, forward_ogg;
+    private int alreadyhere_ogg, forward_ogg,left_ogg,right_ogg,degrees_ogg,hundred_ogg,ten_ogg;
 
     //播放音效相關
     private SoundPool soundPool;
@@ -123,6 +123,11 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         alreadyhere_ogg = soundPool.load(MainActivity.this, R.raw.alreadyhere, 1);
         forward_ogg = soundPool.load(MainActivity.this, R.raw.forward, 1);
+//        left_ogg = soundPool.load(MainActivity.this, R.raw.left, 1);
+//        right_ogg = soundPool.load(MainActivity.this, R.raw.right, 1);
+//        degrees_ogg = soundPool.load(MainActivity.this, R.raw.degrees, 1);
+//        hundred_ogg = soundPool.load(MainActivity.this, R.raw.hundred, 1);
+//        ten_ogg = soundPool.load(MainActivity.this, R.raw.ten, 1);
 
         soundList[0] = soundPool.load(MainActivity.this, R.raw.beacon1, 1);
         soundList[1] = soundPool.load(MainActivity.this, R.raw.beacon2, 1);
@@ -465,6 +470,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             final int ang = (int) resultAngle;
             textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
 
+            // soundPool.play(right_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            //speakAngle(ang);
+            //soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+
             runOnUiThread(new Runnable() {
                 public void run() {
                     navigationAngleTextView.setText("請往右轉 " + ang + "度");
@@ -475,6 +484,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             final int ang = (int) (360 - resultAngle);
             textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
 
+            // soundPool.play(left_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            //speakAngle(ang);
+            //soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+
             runOnUiThread(new Runnable() {
                 public void run() {
                     navigationAngleTextView.setText("請往左轉 " + ang + "度");
@@ -482,7 +495,6 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             });
 
         } else if (resultAngle > 0 && resultAngle <= 10 || resultAngle >= 350) {
-//            textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
 //            soundPool.autoPause();
             //這裡會一直重複講
             soundPool.play(forward_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
@@ -513,5 +525,30 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             Toast.makeText(MainActivity.this, "停止導航", Toast.LENGTH_SHORT).show();
             currentBeaconTextView.setText("點擊選擇目的地");
         }
+    }
+
+    //以此函式將算出的int角度轉換成相對應的數字語音並念出來
+    private void speakAngle(int ang){
+        if(ang>0&&ang<10){
+            soundPool.play(ang, 1.0F, 1.0F, 0, 0, 1.0F);
+        }else if(ang>9&&ang<100){
+            int tens = ang/10;
+            int units = ang%10;
+
+            soundPool.play(tens, 1.0F, 1.0F, 0, 0, 1.0F);
+            soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            soundPool.play(units, 1.0F, 1.0F, 0, 0, 1.0F);
+        }else{
+            int hundreds =ang/100;
+            int tens = (ang/10)%10;
+            int units = ang%10;
+
+            soundPool.play(hundreds, 1.0F, 1.0F, 0, 0, 1.0F);
+            soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            soundPool.play(tens, 1.0F, 1.0F, 0, 0, 1.0F);
+            soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            soundPool.play(units, 1.0F, 1.0F, 0, 0, 1.0F);
+        }
+
     }
 }
