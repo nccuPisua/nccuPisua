@@ -94,11 +94,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private double resultAngle;
 
-    private int alreadyhere_ogg, forward_ogg,left_ogg,right_ogg,degrees_ogg,hundred_ogg,ten_ogg;
+    private int alreadyhere_ogg, forward_ogg,left_ogg,right_ogg,degrees_ogg,hundred_ogg,ten_ogg,again_ogg,already_ogg,caculating_ogg,stop_ogg;
 
     //播放音效相關
     private SoundPool soundPool;
     private int[] soundList = new int[14];
+    private int[] numberlist = new int[10];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,15 +120,30 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private void init() {
 
-        soundPool = new SoundPool(16, AudioManager.STREAM_MUSIC, 5);
+        soundPool = new SoundPool(35, AudioManager.STREAM_MUSIC, 5);
 
         alreadyhere_ogg = soundPool.load(MainActivity.this, R.raw.alreadyhere, 1);
         forward_ogg = soundPool.load(MainActivity.this, R.raw.forward, 1);
-//        left_ogg = soundPool.load(MainActivity.this, R.raw.left, 1);
-//        right_ogg = soundPool.load(MainActivity.this, R.raw.right, 1);
-//        degrees_ogg = soundPool.load(MainActivity.this, R.raw.degrees, 1);
-//        hundred_ogg = soundPool.load(MainActivity.this, R.raw.hundred, 1);
-//        ten_ogg = soundPool.load(MainActivity.this, R.raw.ten, 1);
+        left_ogg = soundPool.load(MainActivity.this, R.raw.left, 1);
+        right_ogg = soundPool.load(MainActivity.this, R.raw.right, 1);
+        degrees_ogg = soundPool.load(MainActivity.this, R.raw.degrees, 1);
+        hundred_ogg = soundPool.load(MainActivity.this, R.raw.hundred, 1);
+        ten_ogg = soundPool.load(MainActivity.this, R.raw.ten, 1);
+        again_ogg = soundPool.load(MainActivity.this, R.raw.again, 1);
+        already_ogg = soundPool.load(MainActivity.this, R.raw.already, 1);
+        caculating_ogg = soundPool.load(MainActivity.this, R.raw.caculating, 1);
+        stop_ogg = soundPool.load(MainActivity.this, R.raw.stop,1);
+
+        numberlist[0] = soundPool.load(MainActivity.this, R.raw.zero, 1);
+        numberlist[1] = soundPool.load(MainActivity.this, R.raw.one, 1);
+        numberlist[2] = soundPool.load(MainActivity.this, R.raw.two, 1);
+        numberlist[3] = soundPool.load(MainActivity.this, R.raw.three, 1);
+        numberlist[4] = soundPool.load(MainActivity.this, R.raw.four, 1);
+        numberlist[5] = soundPool.load(MainActivity.this, R.raw.five, 1);
+        numberlist[6] = soundPool.load(MainActivity.this, R.raw.six, 1);
+        numberlist[7] = soundPool.load(MainActivity.this, R.raw.seven, 1);
+        numberlist[8] = soundPool.load(MainActivity.this, R.raw.eight, 1);
+        numberlist[9] = soundPool.load(MainActivity.this, R.raw.nine, 1);
 
         soundList[0] = soundPool.load(MainActivity.this, R.raw.beacon1, 1);
         soundList[1] = soundPool.load(MainActivity.this, R.raw.beacon2, 1);
@@ -198,6 +214,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 //                navigationLayout.setVisibility(View.VISIBLE);
 
                 Toast.makeText(MainActivity.this, "計算路徑中", Toast.LENGTH_SHORT).show();
+                soundPool.play(caculating_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
                 calculationProgressbar.setVisibility(View.VISIBLE);
                 currentBeaconTextView.setText("前往 " + destinationList.get(destinationViewPager.getCurrentItem()));
             }
@@ -318,6 +335,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 }
 
                 Toast.makeText(MainActivity.this, "系統啟動，左右滑動選擇目的地並點擊", Toast.LENGTH_SHORT).show();
+                soundPool.play(already_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
             }
         });
     }
@@ -468,7 +486,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         } else if (resultAngle > 10 && resultAngle <= 180) {
             final int ang = (int) resultAngle;
-            textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+//            textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+            soundPool.play(right_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            speakAngle(ang);
+            soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
 
             // soundPool.play(right_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
             //speakAngle(ang);
@@ -482,11 +503,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         } else if (resultAngle > 180 && resultAngle < 350) {
             final int ang = (int) (360 - resultAngle);
-            textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
-
-            // soundPool.play(left_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-            //speakAngle(ang);
-            //soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+//            textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+            soundPool.play(left_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            speakAngle(ang);
+            soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
 
             runOnUiThread(new Runnable() {
                 public void run() {
@@ -512,6 +532,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
             //點擊間隔大於兩秒才停止
             Toast.makeText(MainActivity.this, "再按一次停止導航", Toast.LENGTH_SHORT).show();
+            soundPool.play(again_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
             stopNavigationTime = System.currentTimeMillis();
 
         } else {
@@ -523,6 +544,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             scanBeacon(false);
 
             Toast.makeText(MainActivity.this, "停止導航", Toast.LENGTH_SHORT).show();
+            soundPool.play(stop_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
             currentBeaconTextView.setText("點擊選擇目的地");
         }
     }
@@ -530,24 +552,39 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     //以此函式將算出的int角度轉換成相對應的數字語音並念出來
     private void speakAngle(int ang){
         if(ang>0&&ang<10){
-            soundPool.play(ang, 1.0F, 1.0F, 0, 0, 1.0F);
+            soundPool.play(numberlist[ang], 1.0F, 1.0F, 0, 0, 1.0F);
         }else if(ang>9&&ang<100){
             int tens = ang/10;
             int units = ang%10;
 
-            soundPool.play(tens, 1.0F, 1.0F, 0, 0, 1.0F);
-            soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-            soundPool.play(units, 1.0F, 1.0F, 0, 0, 1.0F);
+            if(units==0){
+                soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            }else {
+                soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
+            }
         }else{
             int hundreds =ang/100;
             int tens = (ang/10)%10;
             int units = ang%10;
 
-            soundPool.play(hundreds, 1.0F, 1.0F, 0, 0, 1.0F);
-            soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-            soundPool.play(tens, 1.0F, 1.0F, 0, 0, 1.0F);
-            soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-            soundPool.play(units, 1.0F, 1.0F, 0, 0, 1.0F);
+            if(tens == 0 && units == 0){
+                soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            }else if(units == 0 && tens != 0){
+                soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            }else{
+                soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
+            }
         }
 
     }
