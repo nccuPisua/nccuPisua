@@ -9,108 +9,124 @@
     android:animateLayoutChanges="true"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/direction_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/current_beacon_text_view"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/direction_text_view"
-        android:layout_centerHorizontal="true"
-        android:background="@drawable/corner_textview"
-        android:gravity="center"
-        android:text="點擊選擇目的地"
-        android:textColor="@android:color/white"
-        android:textSize="30dp"
-        android:textStyle="bold" />
+        android:layout_height="match_parent"
+        android:id="@+id/content_layout"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/direction_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/current_beacon_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/direction_text_view"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/corner_textview"
+            android:gravity="center"
+            android:text="點擊選擇目的地"
+            android:textColor="@android:color/white"
+            android:textSize="30dp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/calculating_progressbar"
+            android:layout_centerInParent="true"
+            android:visibility="gone" />
+
+        <RelativeLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/corner_textview"
+            android:layout_below="@+id/current_beacon_text_view"
+            android:id="@+id/navigation_hint_layout"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/navigation_current_loaction_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="目前位於"
+                android:textColor="@android:color/white"
+                android:textSize="30dp"
+                android:textStyle="bold"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_above="@+id/navigation_angle_text_view"
+                android:layout_centerHorizontal="true"/>
+
+            <TextView
+                android:id="@+id/navigation_angle_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="請往前走"
+                android:textColor="@android:color/white"
+                android:textSize="30dp"
+                android:textStyle="bold"
+                android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true"
+                android:layout_margin="8dp" />
+
+            <TextView
+                android:id="@+id/navigation_distance_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="距離10公尺"
+                android:textColor="@android:color/white"
+                android:textSize="30dp"
+                android:textStyle="bold"
+                android:layout_below="@+id/navigation_angle_text_view"
+                android:layout_centerHorizontal="true" />
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="再次點擊取消導航"
+                android:textColor="@android:color/white"
+                android:textSize="22dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="16dp" />
+
+        </RelativeLayout>
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/destination_view_pager"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_below="@+id/navigation_hint_layout">
+
+            <android.support.v4.view.PagerTabStrip
+                android:id="@+id/destination_view_pager_tab"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom" />
+
+        </android.support.v4.view.ViewPager>
+
+    </RelativeLayout>
 
     <ProgressBar
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/calculating_progressbar"
-        android:layout_centerInParent="true"
-        android:visibility="gone" />
-
-    <RelativeLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/corner_textview"
-        android:layout_below="@+id/current_beacon_text_view"
-        android:id="@+id/navigation_hint_layout"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="24dp"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/navigation_current_loaction_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="目前位於"
-            android:textColor="@android:color/white"
-            android:textSize="30dp"
-            android:textStyle="bold"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_above="@+id/navigation_angle_text_view"
-            android:layout_centerHorizontal="true"/>
-
-        <TextView
-            android:id="@+id/navigation_angle_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="請往前走"
-            android:textColor="@android:color/white"
-            android:textSize="30dp"
-            android:textStyle="bold"
-            android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true"
-            android:layout_margin="8dp" />
-
-        <TextView
-            android:id="@+id/navigation_distance_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="距離10公尺"
-            android:textColor="@android:color/white"
-            android:textSize="30dp"
-            android:textStyle="bold"
-            android:layout_below="@+id/navigation_angle_text_view"
-            android:layout_centerHorizontal="true" />
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="再次點擊取消導航"
-            android:textColor="@android:color/white"
-            android:textSize="22dp"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:layout_marginBottom="16dp" />
-
-    </RelativeLayout>
-
-    <android.support.v4.view.ViewPager
-        android:id="@+id/destination_view_pager"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_below="@+id/navigation_hint_layout">
-
-        <android.support.v4.view.PagerTabStrip
-            android:id="@+id/destination_view_pager_tab"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom" />
-
-    </android.support.v4.view.ViewPager>
+        android:id="@+id/loading_progressbar"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:indeterminate="false" />
 
 </RelativeLayout>

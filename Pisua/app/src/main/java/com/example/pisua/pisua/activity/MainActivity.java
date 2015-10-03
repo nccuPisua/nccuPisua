@@ -54,7 +54,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private TextView currentBeaconTextView;
 
     private ProgressBar calculationProgressbar;
+    private ProgressBar loadingProgressbar;
 
+    private RelativeLayout contentLayout;
     private RelativeLayout navigationLayout;
     private TextView navigationCurrentLoactionTextView;
     private TextView navigationAngleTextView;
@@ -94,7 +96,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private double resultAngle;
 
-    private int alreadyhere_ogg, forward_ogg,left_ogg,right_ogg,degrees_ogg,hundred_ogg,ten_ogg,again_ogg,already_ogg,caculating_ogg,stop_ogg,click_ogg;
+    private int alreadyhere_ogg, forward_ogg, left_ogg, right_ogg, degrees_ogg, hundred_ogg, ten_ogg, again_ogg, already_ogg, caculating_ogg, stop_ogg, click_ogg;
 
     //播放音效相關
     private SoundPool soundPool;
@@ -132,8 +134,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         again_ogg = soundPool.load(MainActivity.this, R.raw.again, 1);
         already_ogg = soundPool.load(MainActivity.this, R.raw.already, 1);
         caculating_ogg = soundPool.load(MainActivity.this, R.raw.caculating, 1);
-        stop_ogg = soundPool.load(MainActivity.this, R.raw.stop,1);
-        click_ogg = soundPool.load(MainActivity.this, R.raw.click,1);
+        stop_ogg = soundPool.load(MainActivity.this, R.raw.stop, 1);
+        click_ogg = soundPool.load(MainActivity.this, R.raw.click, 1);
 
         numberlist[0] = soundPool.load(MainActivity.this, R.raw.zero, 1);
         numberlist[1] = soundPool.load(MainActivity.this, R.raw.one, 1);
@@ -167,7 +169,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         currentBeaconTextView = (TextView) findViewById(R.id.current_beacon_text_view);
 
         calculationProgressbar = (ProgressBar) findViewById(R.id.calculating_progressbar);
+        loadingProgressbar = (ProgressBar) findViewById(R.id.loading_progressbar);
 
+        contentLayout = (RelativeLayout) findViewById(R.id.content_layout);
         navigationLayout = (RelativeLayout) findViewById(R.id.navigation_hint_layout);
         navigationLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -337,6 +341,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                     }
                 }
 
+                loadingProgressbar.setVisibility(View.GONE);
+                contentLayout.setVisibility(View.VISIBLE);
                 Toast.makeText(MainActivity.this, "系統啟動，左右滑動選擇目的地並點擊", Toast.LENGTH_SHORT).show();
 
                 //威毅，這邊分兩個檔案是因為之前不知道是因為太長還是怎樣，播到一半就會被切掉。 分成兩個檔案，用handler延遲後這邊目前沒問題
@@ -571,9 +577,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     }
 
     //以此函式將算出的int角度轉換成相對應的數字語音並念出來
-    private void speakAngle(int ang){
+    private void speakAngle(int ang) {
         //威毅，目前主要問題在這個函式，由於要能播出角度，會需要依序播很多次聲音，但目前用handler的方法很蠢而且也放不出來@@
-        if(ang>0&&ang<10){
+        if (ang > 0 && ang < 10) {
             soundPool.play(numberlist[ang], 1.0F, 1.0F, 0, 0, 1.0F);
             new Handler().postDelayed(new Runnable() {
                 public void run() {
@@ -581,11 +587,11 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 }
             }, 500);
 
-        }else if(ang>9&&ang<100){
-            final int tens = ang/10;
-            final int units = ang%10;
+        } else if (ang > 9 && ang < 100) {
+            final int tens = ang / 10;
+            final int units = ang % 10;
 
-            if(units==0){
+            if (units == 0) {
                 soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
                 new Handler().postDelayed(new Runnable() {
                     public void run() {
@@ -597,7 +603,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                         soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
                     }
                 }, 1000);
-            }else {
+            } else {
                 soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
                 new Handler().postDelayed(new Runnable() {
                     public void run() {
@@ -615,12 +621,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                     }
                 }, 1500);
             }
-        }else{
-            final int hundreds =ang/100;
-            final int tens = (ang/10)%10;
-            final int units = ang%10;
+        } else {
+            final int hundreds = ang / 100;
+            final int tens = (ang / 10) % 10;
+            final int units = ang % 10;
 
-            if(tens == 0 && units == 0){
+            if (tens == 0 && units == 0) {
                 soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
                 new Handler().postDelayed(new Runnable() {
                     public void run() {
@@ -632,7 +638,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                         soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
                     }
                 }, 1000);
-            }else if(units == 0 && tens != 0){
+            } else if (units == 0 && tens != 0) {
                 soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
                 new Handler().postDelayed(new Runnable() {
                     public void run() {
@@ -654,7 +660,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                         soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
                     }
                 }, 2000);
-            }else{
+            } else {
                 soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
                 new Handler().postDelayed(new Runnable() {
                     public void run() {
