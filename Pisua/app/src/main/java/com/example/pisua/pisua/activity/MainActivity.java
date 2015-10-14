@@ -1,7 +1,9 @@
 package com.example.pisua.pisua.activity;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -127,12 +129,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         init();
 
         if(isNetworkAvailable()){
-            Toast.makeText(MainActivity.this, "connect", Toast.LENGTH_SHORT).show();
             initPathMatrix();
         }else{
-            Toast.makeText(MainActivity.this, "unconnect", Toast.LENGTH_SHORT).show();
+            networkErrorDialog();
         }
-
     }
 
     //釋放資源
@@ -845,7 +845,32 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         }
     }
 
-    public boolean isNetworkAvailable() {
+    private void networkErrorDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("讀取資料失敗")
+                .setMessage("請開啟網路後，點擊確定重新載入")
+                .setCancelable(false)
+                .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (isNetworkAvailable()) {
+                            initPathMatrix();
+                        } else {
+                            networkErrorDialog();
+                        }
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = connectivityManager.getActiveNetworkInfo();
