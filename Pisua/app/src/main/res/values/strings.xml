@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Liderot</string>
 
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+
+    <string name="click_hint">Click to start guiding</string>
 </resources>

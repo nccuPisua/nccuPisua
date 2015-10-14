@@ -1,11 +1,16 @@
 package com.example.pisua.pisua.activity;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
@@ -42,6 +47,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private Handler mHandler;
 
 //    private boolean indoorMode = true;
+
+    private final String LiderotUUID = "58508BDB-AA6E-46FB-A327-BBEC5463BE78";
 
     private boolean beaconScanning = false;
 
@@ -110,13 +117,21 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private int[] soundList = new int[14];
     private int[] numberlist = new int[10];
 
+    private BluetoothAdapter mBluetoothAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         init();
-        initPathMatrix();
+
+        if(isNetworkAvailable()){
+            Toast.makeText(MainActivity.this, "connect", Toast.LENGTH_SHORT).show();
+            initPathMatrix();
+        }else{
+            Toast.makeText(MainActivity.this, "unconnect", Toast.LENGTH_SHORT).show();
+        }
 
     }
 
@@ -128,6 +143,16 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     }
 
     private void init() {
+
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        if (mBluetoothAdapter == null) {
+            Toast.makeText(MainActivity.this, "bluetooth is unsupported by this device", Toast.LENGTH_SHORT).show();
+        }else{
+            if (!mBluetoothAdapter.isEnabled()) {
+                startActivity(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE));
+            }
+        }
 
         soundPool = new SoundPool(35, AudioManager.STREAM_MUSIC, 5);
 
@@ -451,7 +476,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     @Override
     public void onScaned(final iBeaconData iBeaconData) {
         Log.e(MainApplication.PISUA_TAG, "onScaned");
-        if (beaconScanning) {
+        if (beaconScanning && iBeaconData.beaconUuid.equals(LiderotUUID)) {
 //            scanedCount++;
 
             runOnUiThread(new Runnable() {
@@ -695,52 +720,34 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             if (units == 0) {
                 soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
 
-                try {
-                    Thread.sleep(500);
-                    soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 500);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1000);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1000);
             } else {
                 soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
 
-                try {
-                    Thread.sleep(500);
-                    soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 500);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1000);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1000);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1500);
             }
         } else {
             final int hundreds = ang / 100;
@@ -750,141 +757,102 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             if (tens == 0 && units == 0) {
                 soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
 
-                try {
-                    Thread.sleep(500);
-                    soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 500);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1000);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1000);
             } else if (units == 0 && tens != 0) {
                 soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
 
-                try {
-                    Thread.sleep(500);
-                    soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 500);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1000);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1500);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 2000);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1000);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 2000);
             } else if (tens == 0 && units != 0) {
                 soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
 
-                try {
-                    Thread.sleep(500);
-                    soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 500);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1000);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1500);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 2000);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1000);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 2000);
             } else {
                 soundPool.play(numberlist[hundreds], 1.0F, 1.0F, 0, 0, 1.0F);
 
-                try {
-                    Thread.sleep(500);
-                    soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
-                    Thread.sleep(500);
-                    soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 500);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1000);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 1500);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 2000);
-//                new Handler().postDelayed(new Runnable() {
-//                    public void run() {
-//                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-//                    }
-//                }, 2500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(hundred_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(numberlist[tens], 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1000);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(ten_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 1500);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(numberlist[units], 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 2000);
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        soundPool.play(degrees_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    }
+                }, 2500);
             }
         }
+    }
 
+    public boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = connectivityManager.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
+        }
+
+        return false;
     }
 }

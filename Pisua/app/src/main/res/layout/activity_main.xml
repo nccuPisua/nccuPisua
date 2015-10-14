@@ -29,7 +29,7 @@
             android:layout_centerHorizontal="true"
             android:background="@drawable/corner_textview"
             android:gravity="center"
-            android:text="點擊選擇目的地"
+            android:text="@string/click_hint"
             android:textColor="@android:color/white"
             android:textSize="30dp"
             android:textStyle="bold" />

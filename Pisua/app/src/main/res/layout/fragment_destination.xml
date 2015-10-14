@@ -8,7 +8,7 @@
     <TextView android:id="@+id/direction_text_view" android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:textSize="60dp"
+        android:textSize="45dp"
         android:text="廁所" />
 
 
