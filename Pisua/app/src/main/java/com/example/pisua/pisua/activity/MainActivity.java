@@ -147,7 +147,17 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         if (mBluetoothAdapter == null) {
-            Toast.makeText(MainActivity.this, "bluetooth is unsupported by this device", Toast.LENGTH_SHORT).show();
+
+            if(englishMode){
+                Toast.makeText(MainActivity.this, "Sorry, Bluetooth is unsupported by this device", Toast.LENGTH_SHORT).show();
+
+                textToSpeechObject.speak("Sorry, Bluetooth is unsupported by this device", TextToSpeech.QUEUE_FLUSH, null);
+
+            }else{
+                Toast.makeText(MainActivity.this, "很抱歉，您的裝置不支援藍芽，無法使用本APP", Toast.LENGTH_SHORT).show();
+                textToSpeechObject.speak("Sorry, Bluetooth is unsupported by this device", TextToSpeech.QUEUE_FLUSH, null);
+            }
+
         }else{
             if (!mBluetoothAdapter.isEnabled()) {
                 startActivity(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE));
@@ -307,7 +317,6 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         }
 
         beaconScanManager = new iBeaconScanManager(this, this);
-
         textToSpeechObject = new TextToSpeech(getApplicationContext(),
                 new TextToSpeech.OnInitListener() {
                     @Override
@@ -847,25 +856,49 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private void networkErrorDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle("讀取資料失敗")
-                .setMessage("請開啟網路後，點擊確定重新載入")
-                .setCancelable(false)
-                .setPositiveButton("確定", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (isNetworkAvailable()) {
-                            initPathMatrix();
-                        } else {
-                            networkErrorDialog();
+        if(englishMode){
+            textToSpeechObject.speak("Failed to load data, Please check your Internet connection and reload", TextToSpeech.QUEUE_FLUSH, null);
+            builder.setTitle("Failed to load data")
+                    .setMessage("Please check your Internet connection and click to reload")
+                    .setCancelable(false)
+                    .setPositiveButton("Reload", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (isNetworkAvailable()) {
+                                initPathMatrix();
+                            } else {
+                                networkErrorDialog();
+                            }
                         }
-                    }
-                })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                    }
-                });
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    });
+        }else{
+            textToSpeechObject.speak("Failed to load data, Please check your Internet connection and reload", TextToSpeech.QUEUE_FLUSH, null);
+            builder.setTitle("讀取資料失敗")
+                    .setMessage("請開啟網路後，點擊確定重新載入")
+                    .setCancelable(false)
+                    .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (isNetworkAvailable()) {
+                                initPathMatrix();
+                            } else {
+                                networkErrorDialog();
+                            }
+                        }
+                    })
+                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    });
+        }
         AlertDialog dialog = builder.create();
         dialog.show();
     }
