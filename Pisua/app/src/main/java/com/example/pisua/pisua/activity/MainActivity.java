@@ -41,15 +41,17 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private Handler mHandler;
 
-    private boolean indoorMode = true;
+//    private boolean indoorMode = true;
 
     private boolean beaconScanning = false;
+
+    private boolean englishMode = true;
 
     private Runnable scanRunnable;
 
     private long stopNavigationTime;
 
-    private static final int INDOOR_CHECK_PERIOD = 20 * 1000;
+//    private static final int INDOOR_CHECK_PERIOD = 20 * 1000;
     private static final int SCAN_PERIOD = 5000;
 
     //顯示方位
@@ -82,6 +84,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private SlidePagerAdapter destinationAdapter;
 
     private List<String> destinationList = new ArrayList<>();
+    private List<String> engDestinationList = new ArrayList<>();
     //DB抓下來的beacon資料存在此
     private List<Beacon_Data> beaconDataList = new ArrayList<>();
     private HashMap<String, Number> destinationMinorList = new HashMap<>();
@@ -94,9 +97,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private double angle = -1;
 
-    private int scanedCount = 0;
+//    private int scanedCount = 0;
 
-    private int lastScanedCount = -1;
+//    private int lastScanedCount = -1;
 
     private double resultAngle;
 
@@ -231,11 +234,21 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
 //                navigationLayout.setVisibility(View.VISIBLE);
 
-                Toast.makeText(MainActivity.this, "計算路徑中", Toast.LENGTH_SHORT).show();
-                soundPool.autoPause();
-                soundPool.play(caculating_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                calculationProgressbar.setVisibility(View.VISIBLE);
-                currentBeaconTextView.setText("前往 " + destinationList.get(destinationViewPager.getCurrentItem()));
+
+                if(englishMode){
+                    Toast.makeText(MainActivity.this, "Path Calculating", Toast.LENGTH_SHORT).show();
+                    textToSpeechObject.speak("Path Calculating", TextToSpeech.QUEUE_FLUSH, null);
+                    calculationProgressbar.setVisibility(View.VISIBLE);
+                    currentBeaconTextView.setText("Go to " + engDestinationList.get(destinationViewPager.getCurrentItem()));
+                }else{
+                    Toast.makeText(MainActivity.this, "計算路徑中", Toast.LENGTH_SHORT).show();
+                    soundPool.autoPause();
+                    soundPool.play(caculating_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                    calculationProgressbar.setVisibility(View.VISIBLE);
+                    currentBeaconTextView.setText("前往 " + destinationList.get(destinationViewPager.getCurrentItem()));
+                }
+
+
             }
         });
 
@@ -246,8 +259,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
             @Override
             public void onPageSelected(int position) {
-                soundPool.autoPause();
-                soundPool.play(soundList[position], 1.0F, 1.0F, 0, 0, 1.0F);
+                if(englishMode){
+                    textToSpeechObject.speak(engDestinationList.get(position), TextToSpeech.QUEUE_FLUSH, null);
+                }else{
+                    soundPool.autoPause();
+                    soundPool.play(soundList[position], 1.0F, 1.0F, 0, 0, 1.0F);
+                }
             }
 
             @Override
@@ -294,25 +311,25 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     }
 
     //威毅，現在是不是不需要這個函式了阿?
-    private void indoorCheck() {
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (scanedCount > lastScanedCount) {
-                    lastScanedCount = scanedCount;
-                    if (!indoorMode) {
-                        indoorMode = true;
-                    }
-                } else {
-                    if (indoorMode) {
-                        indoorMode = false;
-                    }
-                }
-
-                indoorCheck();
-            }
-        }, INDOOR_CHECK_PERIOD);
-    }
+//    private void indoorCheck() {
+//        mHandler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                if (scanedCount > lastScanedCount) {
+//                    lastScanedCount = scanedCount;
+//                    if (!indoorMode) {
+//                        indoorMode = true;
+//                    }
+//                } else {
+//                    if (indoorMode) {
+//                        indoorMode = false;
+//                    }
+//                }
+//
+//                indoorCheck();
+//            }
+//        }, INDOOR_CHECK_PERIOD);
+//    }
 
     private void initPathMatrix() {
         ParseQuery<Beacon_Data> beaconDataParseQuery = ParseQuery.getQuery(Beacon_Data.class);
@@ -323,7 +340,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             public void done(List<Beacon_Data> results, ParseException e) {
                 beaconDataList.addAll(results);
 //                scanBeacon(true);
-                indoorCheck();
+//                indoorCheck();
 
                 int resultsSize = results.size();
                 pathMatrix = new double[resultsSize][resultsSize];
@@ -331,11 +348,16 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 for (int i = 0; i < resultsSize; i++) {
                     if (results.get(i).getString("Destination") != null) {
                         destinationList.add(results.get(i).getString("Destination"));
+                        engDestinationList.add(results.get(i).getString("EngDestination"));
                         destinationMinorList.put(results.get(i).getString("Destination"), results.get(i).getMinor());
                     }
                 }
+                if(englishMode){
+                    destinationAdapter.setDestinationList(engDestinationList);
+                }else{
+                    destinationAdapter.setDestinationList(destinationList);
+                }
 
-                destinationAdapter.setDestinationList(destinationList);
                 destinationAdapter.notifyDataSetChanged();
                 for (int i = 0; i < resultsSize; i++) {
                     for (int j = 0; j < resultsSize; j++) {
@@ -353,21 +375,30 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
                 loadingProgressbar.setVisibility(View.GONE);
                 contentLayout.setVisibility(View.VISIBLE);
-                Toast.makeText(MainActivity.this, "系統啟動，左右滑動選擇目的地並點擊螢幕開始導航", Toast.LENGTH_SHORT).show();
 
-                //威毅，這邊分兩個檔案是因為之前不知道是因為太長還是怎樣，播到一半就會被切掉。 分成兩個檔案，用handler延遲後這邊目前沒問題
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        soundPool.play(already_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                        try {
-                            Thread.sleep(5000);
-                            soundPool.play(click_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-                        } catch (InterruptedException e1) {
-                            e1.printStackTrace();
+                if(englishMode){
+                    Toast.makeText(MainActivity.this, "System is already, please slide to choose destination, and click to start guiding", Toast.LENGTH_SHORT).show();
+                    textToSpeechObject.speak("System is already, please slide to choose destination, and click to start guiding", TextToSpeech.QUEUE_FLUSH, null);
+                }else{
+                    Toast.makeText(MainActivity.this, "系統啟動，左右滑動選擇目的地並點擊螢幕開始導航", Toast.LENGTH_SHORT).show();
+
+                    //威毅，這邊分兩個檔案是因為之前不知道是因為太長還是怎樣，播到一半就會被切掉。 分成兩個檔案，用handler延遲後這邊目前沒問題
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            soundPool.play(already_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                            try {
+                                Thread.sleep(5000);
+                                soundPool.play(click_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
                         }
-                    }
-                }, 2000);
+                    }, 2000);
+                }
+
+
+
 
 //                new Handler().postDelayed(new Runnable() {
 //                    public void run() {
@@ -401,7 +432,15 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     public void onSensorChanged(SensorEvent event) {
         float[] values = event.values;
         directionAngle = values[0];
-        directionTextView.setText(directionAngle + "度");
+
+        if(englishMode){
+            directionTextView.setText(directionAngle + "degrees");
+        }else{
+            directionTextView.setText(directionAngle + "度");
+        }
+
+
+
     }
 
     @Override
@@ -413,11 +452,16 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     public void onScaned(final iBeaconData iBeaconData) {
         Log.e(MainApplication.PISUA_TAG, "onScaned");
         if (beaconScanning) {
-            scanedCount++;
+//            scanedCount++;
 
             runOnUiThread(new Runnable() {
                 public void run() {
-                    navigationCurrentLoactionTextView.setText("現在位於Beacon" + iBeaconData.minor + "\n 距離您" + Math.round(iBeaconData.calDistance()) + "公尺");
+                    if(englishMode){
+                        navigationCurrentLoactionTextView.setText("You're at" + iBeaconData.minor + "\n Still have" + Math.round(iBeaconData.calDistance()) + "meters far");
+                    }else{
+                        navigationCurrentLoactionTextView.setText("現在位於" + destinationList.get(iBeaconData.minor-1) + "\n 距離您" + Math.round(iBeaconData.calDistance()) + "公尺");
+                    }
+
                 }
             });
 
@@ -527,62 +571,96 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         } else if (resultAngle > 10 && resultAngle <= 180) {
             final int ang = (int) resultAngle;
-//            textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
-            soundPool.autoPause();
-            soundPool.play(right_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-            //威毅，目前speakAngle都播不出聲音，只有"請往右轉"
-            new Handler().postDelayed(new Runnable() {
-                public void run() {
-                    speakAngle(ang);
-                }
-            }, 1000);
 
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    navigationAngleTextView.setText("請往右轉 " + ang + "度");
-                }
-            });
+            if(englishMode){
+                textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        navigationAngleTextView.setText("Please turn right " + ang + "degrees");
+                    }
+                });
+            }else{
+                soundPool.autoPause();
+                soundPool.play(right_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                //威毅，目前speakAngle都播不出聲音，只有"請往右轉"
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        speakAngle(ang);
+                    }
+                }, 1000);
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        navigationAngleTextView.setText("請往右轉 " + ang + "度");
+                    }
+                });
+            }
+
 
         } else if (resultAngle > 180 && resultAngle < 350) {
             final int ang = (int) (360 - resultAngle);
-//            textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+            if(englishMode){
+                textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        navigationAngleTextView.setText("Please turn left " + ang + "degrees");
+                    }
+                });
+            }else{
+                soundPool.autoPause();
+                soundPool.play(left_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                //威毅，目前speakAngle都播不出聲音，只有"請往左轉"
+                new Handler().postDelayed(new Runnable() {
+                    public void run() {
+                        speakAngle(ang);
+                    }
+                }, 1000);
 
-            soundPool.autoPause();
-            soundPool.play(left_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-            //威毅，目前speakAngle都播不出聲音，只有"請往左轉"
-            new Handler().postDelayed(new Runnable() {
-                public void run() {
-                    speakAngle(ang);
-                }
-            }, 1000);
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        navigationAngleTextView.setText("請往左轉 " + ang + "度");
+                    }
+                });
+            }
 
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    navigationAngleTextView.setText("請往左轉 " + ang + "度");
-                }
-            });
+
 
         } else if (resultAngle > 0 && resultAngle <= 10 || resultAngle >= 350) {
-//            soundPool.autoPause();
-            //這裡會一直重複講
-            soundPool.autoPause();
-            soundPool.play(forward_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
 
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    navigationAngleTextView.setText("請往前走");
-                }
-            });
+            if(englishMode){
+                textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        navigationAngleTextView.setText("Please go forward");
+                    }
+                });
+            }else{
+                //這裡會一直重複講
+                soundPool.autoPause();
+                soundPool.play(forward_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        navigationAngleTextView.setText("請往前走");
+                    }
+                });
+            }
+
         }
     }
 
     private void StopNavigation() {
         if ((System.currentTimeMillis() - stopNavigationTime) > 5000) {
 
-            //點擊間隔大於兩秒才停止
-            Toast.makeText(MainActivity.this, "再按一次停止導航", Toast.LENGTH_SHORT).show();
-            soundPool.autoPause();
-            soundPool.play(again_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            if(englishMode){
+                Toast.makeText(MainActivity.this, "Click again to stop guiding", Toast.LENGTH_SHORT).show();
+                textToSpeechObject.speak("click again to stop guiding", TextToSpeech.QUEUE_FLUSH, null);
+            }else{
+                //點擊間隔大於兩秒才停止
+                Toast.makeText(MainActivity.this, "再按一次停止導航", Toast.LENGTH_SHORT).show();
+                soundPool.autoPause();
+                soundPool.play(again_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            }
             stopNavigationTime = System.currentTimeMillis();
 
         } else {
@@ -593,10 +671,17 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             destinationViewPager.setVisibility(View.VISIBLE);
             scanBeacon(false);
 
-            Toast.makeText(MainActivity.this, "停止導航", Toast.LENGTH_SHORT).show();
-            soundPool.autoPause();
-            soundPool.play(stop_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
-            currentBeaconTextView.setText("點擊選擇目的地");
+            if(englishMode){
+                Toast.makeText(MainActivity.this, "Stop Guiding", Toast.LENGTH_SHORT).show();
+                textToSpeechObject.speak("Stop Guiding", TextToSpeech.QUEUE_FLUSH, null);
+                currentBeaconTextView.setText("Click to select destination");
+            }else{
+                Toast.makeText(MainActivity.this, "停止導航", Toast.LENGTH_SHORT).show();
+                soundPool.autoPause();
+                soundPool.play(stop_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                currentBeaconTextView.setText("點擊選擇目的地");
+            }
+
         }
     }
 
