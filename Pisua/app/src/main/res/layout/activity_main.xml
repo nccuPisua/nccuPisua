@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/content_layout"
-        android:visibility="gone">
+        android:visibility="visible">
 
         <TextView
             android:id="@+id/direction_text_view"
@@ -29,7 +29,7 @@
             android:layout_centerHorizontal="true"
             android:background="@drawable/corner_textview"
             android:gravity="center"
-            android:text="@string/click_hint"
+            android:text="Click to start guiding"
             android:textColor="@android:color/white"
             android:textSize="30dp"
             android:textStyle="bold" />
@@ -80,23 +80,11 @@
                 android:layout_margin="8dp" />
 
             <TextView
-                android:id="@+id/navigation_distance_text_view"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="距離10公尺"
-                android:textColor="@android:color/white"
-                android:textSize="30dp"
-                android:textStyle="bold"
-                android:layout_below="@+id/navigation_angle_text_view"
-                android:layout_centerHorizontal="true" />
-
-            <TextView
                 android:id="@+id/textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="再次點擊取消導航"
+                android:text="Click twice to cancel guiding"
                 android:textColor="@android:color/white"
                 android:textSize="22dp"
                 android:layout_alignParentBottom="true"

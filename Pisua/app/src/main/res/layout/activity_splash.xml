@@ -2,12 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.pisua.pisua.activity.SplashActivity"
-    android:background="@android:color/white">
+    android:background="@android:color/black">
 
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/imageView"
-        android:background="@drawable/splash_bg"
-        android:layout_margin="24dp" />
+        android:background="@drawable/splash_bg" />
 </RelativeLayout>

@@ -1,9 +1,8 @@
 package com.example.pisua.pisua.activity;
 
-import android.app.AlertDialog;
+import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -60,7 +59,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private long stopNavigationTime;
 
-//    private static final int INDOOR_CHECK_PERIOD = 20 * 1000;
+    //    private static final int INDOOR_CHECK_PERIOD = 20 * 1000;
     private static final int SCAN_PERIOD = 5000;
 
     //顯示方位
@@ -128,9 +127,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         init();
 
-        if(isNetworkAvailable()){
+        if (isNetworkAvailable()) {
             initPathMatrix();
-        }else{
+        } else {
             networkErrorDialog();
         }
     }
@@ -148,17 +147,17 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         if (mBluetoothAdapter == null) {
 
-            if(englishMode){
+            if (englishMode) {
                 Toast.makeText(MainActivity.this, "Sorry, Bluetooth is unsupported by this device", Toast.LENGTH_SHORT).show();
 
                 textToSpeechObject.speak("Sorry, Bluetooth is unsupported by this device", TextToSpeech.QUEUE_FLUSH, null);
 
-            }else{
+            } else {
                 Toast.makeText(MainActivity.this, "很抱歉，您的裝置不支援藍芽，無法使用本APP", Toast.LENGTH_SHORT).show();
                 textToSpeechObject.speak("Sorry, Bluetooth is unsupported by this device", TextToSpeech.QUEUE_FLUSH, null);
             }
 
-        }else{
+        } else {
             if (!mBluetoothAdapter.isEnabled()) {
                 startActivity(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE));
             }
@@ -233,7 +232,6 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         navigationCurrentLoactionTextView = (TextView) findViewById(R.id.navigation_current_loaction_text_view);
         navigationAngleTextView = (TextView) findViewById(R.id.navigation_angle_text_view);
-        navigationDistanceTextView = (TextView) findViewById(R.id.navigation_distance_text_view);
 
         destinationViewPager = (ViewPager) findViewById(R.id.destination_view_pager);
         destinationViewPagerTab = (PagerTabStrip) findViewById(R.id.destination_view_pager_tab);
@@ -270,12 +268,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 //                navigationLayout.setVisibility(View.VISIBLE);
 
 
-                if(englishMode){
+                if (englishMode) {
                     Toast.makeText(MainActivity.this, "Path Calculating", Toast.LENGTH_SHORT).show();
                     textToSpeechObject.speak("Path Calculating", TextToSpeech.QUEUE_FLUSH, null);
                     calculationProgressbar.setVisibility(View.VISIBLE);
                     currentBeaconTextView.setText("Go to " + engDestinationList.get(destinationViewPager.getCurrentItem()));
-                }else{
+                } else {
                     Toast.makeText(MainActivity.this, "計算路徑中", Toast.LENGTH_SHORT).show();
                     soundPool.autoPause();
                     soundPool.play(caculating_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
@@ -294,9 +292,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
             @Override
             public void onPageSelected(int position) {
-                if(englishMode){
+                if (englishMode) {
                     textToSpeechObject.speak(engDestinationList.get(position), TextToSpeech.QUEUE_FLUSH, null);
-                }else{
+                } else {
                     soundPool.autoPause();
                     soundPool.play(soundList[position], 1.0F, 1.0F, 0, 0, 1.0F);
                 }
@@ -386,9 +384,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                         destinationMinorList.put(results.get(i).getString("Destination"), results.get(i).getMinor());
                     }
                 }
-                if(englishMode){
+                if (englishMode) {
                     destinationAdapter.setDestinationList(engDestinationList);
-                }else{
+                } else {
                     destinationAdapter.setDestinationList(destinationList);
                 }
 
@@ -410,10 +408,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 loadingProgressbar.setVisibility(View.GONE);
                 contentLayout.setVisibility(View.VISIBLE);
 
-                if(englishMode){
+                if (englishMode) {
                     Toast.makeText(MainActivity.this, "System is already, please slide to choose destination, and click to start guiding", Toast.LENGTH_SHORT).show();
                     textToSpeechObject.speak("System is already, please slide to choose destination, and click to start guiding", TextToSpeech.QUEUE_FLUSH, null);
-                }else{
+                } else {
                     Toast.makeText(MainActivity.this, "系統啟動，左右滑動選擇目的地並點擊螢幕開始導航", Toast.LENGTH_SHORT).show();
 
                     //威毅，這邊分兩個檔案是因為之前不知道是因為太長還是怎樣，播到一半就會被切掉。 分成兩個檔案，用handler延遲後這邊目前沒問題
@@ -430,8 +428,6 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                         }
                     }, 2000);
                 }
-
-
 
 
 //                new Handler().postDelayed(new Runnable() {
@@ -467,12 +463,11 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         float[] values = event.values;
         directionAngle = values[0];
 
-        if(englishMode){
+        if (englishMode) {
             directionTextView.setText(directionAngle + "degrees");
-        }else{
+        } else {
             directionTextView.setText(directionAngle + "度");
         }
-
 
 
     }
@@ -490,10 +485,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
             runOnUiThread(new Runnable() {
                 public void run() {
-                    if(englishMode){
-                        navigationCurrentLoactionTextView.setText("You're at " + engDestinationList.get(iBeaconData.minor-1) + "\n Still have " + Math.round(iBeaconData.calDistance()) + " meters far");
-                    }else{
-                        navigationCurrentLoactionTextView.setText("現在位於 " + destinationList.get(iBeaconData.minor-1) + "\n 距離您 " + Math.round(iBeaconData.calDistance()) + " 公尺");
+                    if (englishMode) {
+                        navigationCurrentLoactionTextView.setText("You're at " + engDestinationList.get(iBeaconData.minor - 1) + "\n Still have " + Math.round(iBeaconData.calDistance()) + " meters far");
+                    } else {
+                        navigationCurrentLoactionTextView.setText("現在位於 " + destinationList.get(iBeaconData.minor - 1) + "\n 距離您 " + Math.round(iBeaconData.calDistance()) + " 公尺");
                     }
 
                 }
@@ -606,14 +601,14 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         } else if (resultAngle > 10 && resultAngle <= 180) {
             final int ang = (int) resultAngle;
 
-            if(englishMode){
+            if (englishMode) {
                 textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
                 runOnUiThread(new Runnable() {
                     public void run() {
                         navigationAngleTextView.setText("Please turn right " + ang + " degrees");
                     }
                 });
-            }else{
+            } else {
                 soundPool.autoPause();
                 soundPool.play(right_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
                 //威毅，目前speakAngle都播不出聲音，只有"請往右轉"
@@ -633,14 +628,14 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
         } else if (resultAngle > 180 && resultAngle < 350) {
             final int ang = (int) (360 - resultAngle);
-            if(englishMode){
+            if (englishMode) {
                 textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
                 runOnUiThread(new Runnable() {
                     public void run() {
                         navigationAngleTextView.setText("Please turn left " + ang + " degrees");
                     }
                 });
-            }else{
+            } else {
                 soundPool.autoPause();
                 soundPool.play(left_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
                 //威毅，目前speakAngle都播不出聲音，只有"請往左轉"
@@ -658,17 +653,16 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             }
 
 
-
         } else if (resultAngle > 0 && resultAngle <= 10 || resultAngle >= 350) {
 
-            if(englishMode){
+            if (englishMode) {
                 textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
                 runOnUiThread(new Runnable() {
                     public void run() {
                         navigationAngleTextView.setText("Please go forward");
                     }
                 });
-            }else{
+            } else {
                 //這裡會一直重複講
                 soundPool.autoPause();
                 soundPool.play(forward_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
@@ -686,10 +680,10 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private void StopNavigation() {
         if ((System.currentTimeMillis() - stopNavigationTime) > 5000) {
 
-            if(englishMode){
+            if (englishMode) {
                 Toast.makeText(MainActivity.this, "Click again to stop guiding", Toast.LENGTH_SHORT).show();
                 textToSpeechObject.speak("click again to stop guiding", TextToSpeech.QUEUE_FLUSH, null);
-            }else{
+            } else {
                 //點擊間隔大於兩秒才停止
                 Toast.makeText(MainActivity.this, "再按一次停止導航", Toast.LENGTH_SHORT).show();
                 soundPool.autoPause();
@@ -705,11 +699,11 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             destinationViewPager.setVisibility(View.VISIBLE);
             scanBeacon(false);
 
-            if(englishMode){
+            if (englishMode) {
                 Toast.makeText(MainActivity.this, "Stop Guiding", Toast.LENGTH_SHORT).show();
                 textToSpeechObject.speak("Stop Guiding", TextToSpeech.QUEUE_FLUSH, null);
                 currentBeaconTextView.setText("Click to select destination");
-            }else{
+            } else {
                 Toast.makeText(MainActivity.this, "停止導航", Toast.LENGTH_SHORT).show();
                 soundPool.autoPause();
                 soundPool.play(stop_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
@@ -854,53 +848,80 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         }
     }
 
-    private void networkErrorDialog(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        if(englishMode){
-            textToSpeechObject.speak("Failed to load data, Please check your Internet connection and reload", TextToSpeech.QUEUE_FLUSH, null);
-            builder.setTitle("Failed to load data")
-                    .setMessage("Please check your Internet connection and click to reload")
-                    .setCancelable(false)
-                    .setPositiveButton("Reload", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (isNetworkAvailable()) {
-                                initPathMatrix();
-                            } else {
-                                networkErrorDialog();
-                            }
-                        }
-                    })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            finish();
-                        }
-                    });
-        }else{
-            textToSpeechObject.speak("Failed to load data, Please check your Internet connection and reload", TextToSpeech.QUEUE_FLUSH, null);
-            builder.setTitle("讀取資料失敗")
-                    .setMessage("請開啟網路後，點擊確定重新載入")
-                    .setCancelable(false)
-                    .setPositiveButton("確定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (isNetworkAvailable()) {
-                                initPathMatrix();
-                            } else {
-                                networkErrorDialog();
-                            }
-                        }
-                    })
-                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            finish();
-                        }
-                    });
-        }
-        AlertDialog dialog = builder.create();
+    private void networkErrorDialog() {
+        final Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar);
+
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                textToSpeechObject.speak("Failed to load data, Please check your Internet connection and click to reload", TextToSpeech.QUEUE_FLUSH, null);
+            }
+        }, 500);
+
+        dialog.setContentView(R.layout.dialog_network_error);
+        dialog.setCancelable(false);
         dialog.show();
+
+        dialog.findViewById(R.id.dialog_layout).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+
+                if (isNetworkAvailable()) {
+                    initPathMatrix();
+                } else {
+                    networkErrorDialog();
+                }
+            }
+        });
+
+//        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+//        if(englishMode){
+//            builder.setTitle("Failed to load data")
+//                    .setMessage("Please check your Internet connection and click to reload")
+//                    .setCancelable(false)
+//                    .setView(view)
+//                    .setPositiveButton("Reload", new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            if (isNetworkAvailable()) {
+//                                initPathMatrix();
+//                            } else {
+//                                networkErrorDialog();
+//                            }
+//                        }
+//                    })
+//                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            finish();
+//                        }
+//                    });
+//        }else{
+//            builder.setTitle("讀取資料失敗")
+//                    .setMessage("請開啟網路後，點擊確定重新載入")
+//                    .setCancelable(false)
+//                    .setView(view)
+//                    .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            if (isNetworkAvailable()) {
+//                                initPathMatrix();
+//                            } else {
+//                                networkErrorDialog();
+//                            }
+//                        }
+//                    })
+//                    .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+//                        @Override
+//                        public void onClick(DialogInterface dialog, int which) {
+//                            finish();
+//                        }
+//                    });
+//        }
+//        AlertDialog dialog = builder.create();
+//        dialog.set
+//        dialog.show();
     }
 
     private boolean isNetworkAvailable() {
