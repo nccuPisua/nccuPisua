@@ -482,9 +482,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             runOnUiThread(new Runnable() {
                 public void run() {
                     if(englishMode){
-                        navigationCurrentLoactionTextView.setText("You're at" + iBeaconData.minor + "\n Still have" + Math.round(iBeaconData.calDistance()) + "meters far");
+                        navigationCurrentLoactionTextView.setText("You're at " + engDestinationList.get(iBeaconData.minor-1) + "\n Still have " + Math.round(iBeaconData.calDistance()) + " meters far");
                     }else{
-                        navigationCurrentLoactionTextView.setText("現在位於" + destinationList.get(iBeaconData.minor-1) + "\n 距離您" + Math.round(iBeaconData.calDistance()) + "公尺");
+                        navigationCurrentLoactionTextView.setText("現在位於 " + destinationList.get(iBeaconData.minor-1) + "\n 距離您 " + Math.round(iBeaconData.calDistance()) + " 公尺");
                     }
 
                 }
@@ -601,7 +601,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 textToSpeechObject.speak("Please turn right " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        navigationAngleTextView.setText("Please turn right " + ang + "degrees");
+                        navigationAngleTextView.setText("Please turn right " + ang + " degrees");
                     }
                 });
             }else{
@@ -628,7 +628,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 textToSpeechObject.speak("Please turn left " + ang + " degrees", TextToSpeech.QUEUE_FLUSH, null);
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        navigationAngleTextView.setText("Please turn left " + ang + "degrees");
+                        navigationAngleTextView.setText("Please turn left " + ang + " degrees");
                     }
                 });
             }else{
