@@ -96,6 +96,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     //DB抓下來的beacon資料存在此
     private List<Beacon_Data> beaconDataList = new ArrayList<>();
     private HashMap<String, Number> destinationMinorList = new HashMap<>();
+    private HashMap<String, Number> engDestinationMinorList = new HashMap<>();
 
     private iBeaconData currentBeacon;
 
@@ -104,6 +105,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private double INF = Double.MAX_VALUE;
 
     private double angle = -1;
+
+    private int minor;
 
 //    private int scanedCount = 0;
 
@@ -378,11 +381,11 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 pathMatrix = new double[resultsSize][resultsSize];
 
                 for (int i = 0; i < resultsSize; i++) {
-                    if (results.get(i).getString("Destination") != null) {
                         destinationList.add(results.get(i).getString("Destination"));
                         engDestinationList.add(results.get(i).getString("EngDestination"));
                         destinationMinorList.put(results.get(i).getString("Destination"), results.get(i).getMinor());
-                    }
+                    engDestinationMinorList.put(results.get(i).getString("EngDestination"), results.get(i).getMinor());
+
                 }
                 if (englishMode) {
                     destinationAdapter.setDestinationList(engDestinationList);
@@ -494,7 +497,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 }
             });
 
-            int minor = destinationMinorList.get(destinationList.get(destinationViewPager.getCurrentItem())).intValue();
+                minor = destinationMinorList.get(destinationList.get(destinationViewPager.getCurrentItem())).intValue();
             if (iBeaconData.minor == minor) {
                 if (iBeaconData.minor != currentBeacon.minor) {
                     currentBeacon = iBeaconData;
@@ -595,8 +598,22 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             resultAngle = a;
         }
         if (resultAngle == INF) {
-            soundPool.autoPause();
-            soundPool.play(alreadyhere_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+            if (englishMode) {
+                textToSpeechObject.speak("You're already here", TextToSpeech.QUEUE_FLUSH, null);
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        navigationAngleTextView.setText("You're already here");
+                    }
+                });
+            }else {
+                soundPool.autoPause();
+                soundPool.play(alreadyhere_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        navigationAngleTextView.setText("您已到達目的地了");
+                    }
+                });
+            }
 
         } else if (resultAngle > 10 && resultAngle <= 180) {
             final int ang = (int) resultAngle;
