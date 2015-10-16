@@ -412,8 +412,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 contentLayout.setVisibility(View.VISIBLE);
 
                 if (englishMode) {
-                    Toast.makeText(MainActivity.this, "System is already, please slide to choose destination, and click to start guiding", Toast.LENGTH_SHORT).show();
-                    textToSpeechObject.speak("System is already, please slide to choose destination, and click to start guiding", TextToSpeech.QUEUE_FLUSH, null);
+                    Toast.makeText(MainActivity.this, "System is ready, please slide to choose your destination, and click to start guiding", Toast.LENGTH_SHORT).show();
+                    textToSpeechObject.speak("System is ready, please slide to choose your destination, and click to start guiding", TextToSpeech.QUEUE_FLUSH, null);
                 } else {
                     Toast.makeText(MainActivity.this, "系統啟動，左右滑動選擇目的地並點擊螢幕開始導航", Toast.LENGTH_SHORT).show();
 
@@ -483,7 +483,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     @Override
     public void onScaned(final iBeaconData iBeaconData) {
         Log.e(MainApplication.PISUA_TAG, "onScaned");
-        if (beaconScanning && iBeaconData.beaconUuid.equals(LiderotUUID)) {
+        if (beaconScanning && iBeaconData.beaconUuid.equals(LiderotUUID) && iBeaconData.rssi > -70 ) {
 //            scanedCount++;
 
             runOnUiThread(new Runnable() {
@@ -503,7 +503,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                     currentBeacon = iBeaconData;
                     provideClue(INF);
                 }
-            } else if (iBeaconData.calDistance() < 100) {
+            } else{
                 currentBeacon = iBeaconData;
                 getNextDestination();
             }
