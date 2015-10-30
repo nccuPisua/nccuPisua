@@ -1,4 +1,4 @@
-package com.example.pisua.pisua.activity;
+package com.pushhands.liderot.activity;
 
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
@@ -26,16 +26,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.THLight.USBeacon.App.Lib.iBeaconData;
-import com.THLight.USBeacon.App.Lib.iBeaconScanManager;
-import com.example.pisua.pisua.MainApplication;
-import com.example.pisua.pisua.R;
-import com.example.pisua.pisua.adapter.SlidePagerAdapter;
-import com.example.pisua.pisua.object.parse.Beacon_Data;
-import com.parse.FindCallback;
-import com.parse.ParseException;
-import com.parse.ParseGeoPoint;
-import com.parse.ParseQuery;
+import com.pushhands.liderot.R;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,13 +38,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     private Handler mHandler;
 
-//    private boolean indoorMode =
-
-    private boolean firstTime = true;
+//    private boolean indoorMode = true;
 
     private final String LiderotUUID = "58508BDB-AA6E-46FB-A327-BBEC5463BE78";
 
     private boolean beaconScanning = false;
+
     private boolean englishMode = true;
 
     private Runnable scanRunnable;
@@ -267,23 +257,16 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
                 destinationViewPager.setVisibility(View.GONE);
-
-                if(!firstTime){
-                    scanBeacon(true);
-                }
+                scanBeacon(true);
 
 //                navigationLayout.setVisibility(View.VISIBLE);
+
 
                 if (englishMode) {
                     Toast.makeText(MainActivity.this, "Path Calculating", Toast.LENGTH_SHORT).show();
                     textToSpeechObject.speak("Path Calculating", TextToSpeech.QUEUE_FLUSH, null);
                     calculationProgressbar.setVisibility(View.VISIBLE);
                     currentBeaconTextView.setText("Go to " + engDestinationList.get(destinationViewPager.getCurrentItem()));
-
-                    if(firstTime){
-                        demoFunction();
-                        firstTime = false;
-                    }
                 } else {
                     Toast.makeText(MainActivity.this, "計算路徑中", Toast.LENGTH_SHORT).show();
                     soundPool.autoPause();
@@ -291,6 +274,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                     calculationProgressbar.setVisibility(View.VISIBLE);
                     currentBeaconTextView.setText("前往 " + destinationList.get(destinationViewPager.getCurrentItem()));
                 }
+
+
             }
         });
 
@@ -387,9 +372,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 pathMatrix = new double[resultsSize][resultsSize];
 
                 for (int i = 0; i < resultsSize; i++) {
-                    destinationList.add(results.get(i).getString("Destination"));
-                    engDestinationList.add(results.get(i).getString("EngDestination"));
-                    destinationMinorList.put(results.get(i).getString("Destination"), results.get(i).getMinor());
+                        destinationList.add(results.get(i).getString("Destination"));
+                        engDestinationList.add(results.get(i).getString("EngDestination"));
+                        destinationMinorList.put(results.get(i).getString("Destination"), results.get(i).getMinor());
                     engDestinationMinorList.put(results.get(i).getString("EngDestination"), results.get(i).getMinor());
 
                 }
@@ -489,7 +474,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     @Override
     public void onScaned(final iBeaconData iBeaconData) {
         Log.e(MainApplication.PISUA_TAG, "onScaned");
-        if (beaconScanning && iBeaconData.beaconUuid.equals(LiderotUUID) && iBeaconData.rssi > -70) {
+        if (beaconScanning && iBeaconData.beaconUuid.equals(LiderotUUID) && iBeaconData.rssi > -70 ) {
 //            scanedCount++;
 
             runOnUiThread(new Runnable() {
@@ -503,13 +488,13 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                 }
             });
 
-            minor = destinationMinorList.get(destinationList.get(destinationViewPager.getCurrentItem())).intValue();
+                minor = destinationMinorList.get(destinationList.get(destinationViewPager.getCurrentItem())).intValue();
             if (iBeaconData.minor == minor) {
                 if (iBeaconData.minor != currentBeacon.minor) {
                     currentBeacon = iBeaconData;
                     provideClue(INF);
                 }
-            } else {
+            } else{
                 currentBeacon = iBeaconData;
                 getNextDestination();
             }
@@ -611,7 +596,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
                         navigationAngleTextView.setText("You're already here");
                     }
                 });
-            } else {
+            }else {
                 soundPool.autoPause();
                 soundPool.play(alreadyhere_ogg, 1.0F, 1.0F, 0, 0, 1.0F);
                 runOnUiThread(new Runnable() {
@@ -956,59 +941,5 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         }
 
         return false;
-    }
-
-    private void demoFunction(){
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                calculationProgressbar.setVisibility(View.GONE);
-                navigationLayout.setVisibility(View.VISIBLE);
-                navigationCurrentLoactionTextView.setText("You're at " + engDestinationList.get(0) + "\n Still have 10 meters far");
-
-                navigationAngleTextView.setText("Please turn right 65 degrees");
-                textToSpeechObject.speak("Please turn right 65 degrees", TextToSpeech.QUEUE_FLUSH, null);
-
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        navigationCurrentLoactionTextView.setText("You're at " + engDestinationList.get(0) + "\n Still have 10 meters far");
-
-                        navigationAngleTextView.setText("Please turn left 10 degrees");
-                        textToSpeechObject.speak("Please turn left 10 degrees", TextToSpeech.QUEUE_FLUSH, null);
-
-                        mHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                navigationCurrentLoactionTextView.setText("You're at " + engDestinationList.get(0) + "\n Still have 5 meters far");
-
-                                navigationAngleTextView.setText("Please go forward");
-                                textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
-
-                                mHandler.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        navigationCurrentLoactionTextView.setText("You're at " + engDestinationList.get(0) + "\n Still have 2 meters far");
-
-                                        navigationAngleTextView.setText("Please go forward");
-                                        textToSpeechObject.speak("Please go forward", TextToSpeech.QUEUE_FLUSH, null);
-
-                                        mHandler.postDelayed(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                navigationCurrentLoactionTextView.setText("You're at " + engDestinationList.get(3));
-
-                                                textToSpeechObject.speak("You're already here", TextToSpeech.QUEUE_FLUSH, null);
-                                                navigationAngleTextView.setText("You're already here");
-                                            }
-                                        }, 5000);
-                                    }
-                                }, 5000);
-                            }
-                        }, 5000);
-                    }
-                }, 5000);
-            }
-        }, 2000);
     }
 }
